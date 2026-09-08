@@ -1,23 +1,27 @@
 """
-Step 8: Train the AI Dead-Reckoning model (stage [4]) on trip M windows.
+Step 8: Train the AI Dead-Reckoning model (stage [4]) on trips M and Vta2.
 1D-CNN backbone -> predicts (dx, dy) displacement per window.
 
-Reads: preprocessing/output/M_windows.npz
-Saves: preprocessing/output/dr_model_M.pt (best checkpoint)
-
-NOTE: only trip M available so far, so split is by CONTIGUOUS time block
-(first 70% train, next 15% val, last 15% test) - NOT random window split,
-to avoid leakage between overlapping windows. Once more trips are added,
-switch to proper trip-level splitting per the training plan.
+Reads M and Vta2 for training/validation, and Vta1a as a fully held-out test
+trip. Each training trip is split by contiguous time blocks (first 85% train,
+last 15% validation) to avoid leakage between overlapping windows.
 """
 
 import numpy as np
+import os
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 
-DATA_PATH = "preprocessing/output/M_windows.npz"
-MODEL_OUT = "preprocessing/output/dr_model_M.pt"
+DATA_PATHS = [
+    "preprocessing/output/06_windows/M_windows.npz",
+    "preprocessing/output/06_windows/Vta2_windows.npz",
+]
+TEST_PATH = "preprocessing/output/06_windows/Vta1a_windows.npz"
+MODEL_OUT = "preprocessing/output/models/dr_model.pt"
+TEST_SPLIT_OUT = "preprocessing/output/test_splits/Vta1a_test_split.npz"
+
+VAL_FRACTION = 0.15
 
 BATCH_SIZE = 64
 EPOCHS = 50
@@ -68,17 +72,31 @@ def physical_regularizer(pred, dt_window=4.0):
     return (implausible ** 2).mean()
 
 
+def split_trip(d, val_fraction=VAL_FRACTION):
+    """Split one trip chronologically, reserving its final windows for validation."""
+    n = len(d["X"])
+    split = int(n * (1 - val_fraction))
+    X_train, Y_train = d["X"][:split], d["y_local"][:split]
+    X_val, Y_val = d["X"][split:], d["y_local"][split:]
+    return X_train, Y_train, X_val, Y_val
+
+
 def main():
-    data = np.load(DATA_PATH)
-    X, Y = data["X"], data["Y"]
-    n = len(X)
+    os.makedirs(os.path.dirname(MODEL_OUT), exist_ok=True)
+    os.makedirs(os.path.dirname(TEST_SPLIT_OUT), exist_ok=True)
 
-    train_end = int(n * 0.70)
-    val_end = int(n * 0.85)
+    d_m = np.load(DATA_PATHS[0])
+    d_v2 = np.load(DATA_PATHS[1])
+    d_test = np.load(TEST_PATH)
 
-    X_train, Y_train = X[:train_end], Y[:train_end]
-    X_val, Y_val = X[train_end:val_end], Y[train_end:val_end]
-    X_test, Y_test = X[val_end:], Y[val_end:]
+    Xm_train, Ym_train, Xm_val, Ym_val = split_trip(d_m)
+    Xv2_train, Yv2_train, Xv2_val, Yv2_val = split_trip(d_v2)
+
+    X_train = np.concatenate([Xm_train, Xv2_train])
+    Y_train = np.concatenate([Ym_train, Yv2_train])
+    X_val = np.concatenate([Xm_val, Xv2_val])
+    Y_val = np.concatenate([Ym_val, Yv2_val])
+    X_test, Y_test = d_test["X"], d_test["y_local"]
 
     print(f"Train: {len(X_train)}  Val: {len(X_val)}  Test: {len(X_test)}")
 
@@ -86,7 +104,7 @@ def main():
     val_loader = DataLoader(WindowDataset(X_val, Y_val), batch_size=BATCH_SIZE, shuffle=False)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = DRNet(in_channels=X.shape[2]).to(device)
+    model = DRNet(in_channels=X_train.shape[2]).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=LR)
     mse = nn.MSELoss()
 
@@ -132,8 +150,10 @@ def main():
     print(f"Saved best checkpoint: {MODEL_OUT}")
 
     # save test set indices/arrays for later evaluation (position integrator, drift check)
-    np.savez("preprocessing/output/M_test_split.npz", X=X_test, Y=Y_test)
-    print("Saved test split: preprocessing/output/M_test_split.npz")
+    np.savez(TEST_SPLIT_OUT,
+             X=X_test, Y=Y_test,
+             y_global=d_test["y_global"], heading_start=d_test["heading_start"])
+    print(f"Saved test split: {TEST_SPLIT_OUT}")
 
 
 if __name__ == "__main__":
