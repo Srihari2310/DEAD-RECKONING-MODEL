@@ -13,10 +13,16 @@ import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 
+torch.manual_seed(42)
+np.random.seed(42)
+
 DATA_PATHS = [
     "preprocessing/output/06_windows/M_windows.npz",
     "preprocessing/output/06_windows/Vta2_windows.npz",
+    "preprocessing/output/06_windows/Vfa01_windows.npz",
+    "preprocessing/output/06_windows/Vtb1_windows.npz",
 ]
+TEST_PATH = "preprocessing/output/06_windows/Vta1a_windows.npz"
 TEST_PATH = "preprocessing/output/06_windows/Vta1a_windows.npz"
 MODEL_OUT = "preprocessing/output/models/dr_model.pt"
 TEST_SPLIT_OUT = "preprocessing/output/test_splits/Vta1a_test_split.npz"
@@ -85,17 +91,23 @@ def main():
     os.makedirs(os.path.dirname(MODEL_OUT), exist_ok=True)
     os.makedirs(os.path.dirname(TEST_SPLIT_OUT), exist_ok=True)
 
-    d_m = np.load(DATA_PATHS[0])
-    d_v2 = np.load(DATA_PATHS[1])
+    train_X_parts, train_Y_parts = [], []
+    val_X_parts, val_Y_parts = [], []
+
+    for path in DATA_PATHS:
+        d = np.load(path)
+        X_train_trip, Y_train_trip, X_val_trip, Y_val_trip = split_trip(d)
+        train_X_parts.append(X_train_trip)
+        train_Y_parts.append(Y_train_trip)
+        val_X_parts.append(X_val_trip)
+        val_Y_parts.append(Y_val_trip)
+
+    X_train = np.concatenate(train_X_parts)
+    Y_train = np.concatenate(train_Y_parts)
+    X_val = np.concatenate(val_X_parts)
+    Y_val = np.concatenate(val_Y_parts)
+
     d_test = np.load(TEST_PATH)
-
-    Xm_train, Ym_train, Xm_val, Ym_val = split_trip(d_m)
-    Xv2_train, Yv2_train, Xv2_val, Yv2_val = split_trip(d_v2)
-
-    X_train = np.concatenate([Xm_train, Xv2_train])
-    Y_train = np.concatenate([Ym_train, Yv2_train])
-    X_val = np.concatenate([Xm_val, Xv2_val])
-    Y_val = np.concatenate([Ym_val, Yv2_val])
     X_test, Y_test = d_test["X"], d_test["y_local"]
 
     print(f"Train: {len(X_train)}  Val: {len(X_val)}  Test: {len(X_test)}")
