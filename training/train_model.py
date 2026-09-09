@@ -9,18 +9,31 @@ last 15% validation) to avoid leakage between overlapping windows.
 
 import numpy as np
 import os
+import random
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 
-torch.manual_seed(42)
-np.random.seed(42)
+SEED = 42
+random.seed(SEED)
+np.random.seed(SEED)
+torch.manual_seed(SEED)
+torch.cuda.manual_seed_all(SEED)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
 
 DATA_PATHS = [
     "preprocessing/output/06_windows/M_windows.npz",
     "preprocessing/output/06_windows/Vta2_windows.npz",
     "preprocessing/output/06_windows/Vfa01_windows.npz",
     "preprocessing/output/06_windows/Vtb1_windows.npz",
+    "preprocessing/output/06_windows/Vtb4_windows.npz",
+    "preprocessing/output/06_windows/Vtb5_windows.npz",
+    "preprocessing/output/06_windows/Vtb6_windows.npz",
+    "preprocessing/output/06_windows/Vtb7_windows.npz",
+    "preprocessing/output/06_windows/Vtb9_windows.npz",
+    "preprocessing/output/06_windows/Vtb11_windows.npz",
+    "preprocessing/output/06_windows/Vtb12_windows.npz",
 ]
 TEST_PATH = "preprocessing/output/06_windows/Vta1a_windows.npz"
 TEST_PATH = "preprocessing/output/06_windows/Vta1a_windows.npz"
@@ -112,7 +125,14 @@ def main():
 
     print(f"Train: {len(X_train)}  Val: {len(X_val)}  Test: {len(X_test)}")
 
-    train_loader = DataLoader(WindowDataset(X_train, Y_train), batch_size=BATCH_SIZE, shuffle=True)
+    g = torch.Generator()
+    g.manual_seed(SEED)
+    train_loader = DataLoader(
+        WindowDataset(X_train, Y_train),
+        batch_size=BATCH_SIZE,
+        shuffle=True,
+        generator=g,
+    )
     val_loader = DataLoader(WindowDataset(X_val, Y_val), batch_size=BATCH_SIZE, shuffle=False)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

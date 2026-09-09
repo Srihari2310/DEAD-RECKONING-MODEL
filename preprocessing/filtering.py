@@ -76,7 +76,7 @@ def filter_trip(trip_name, output_dir="preprocessing/output", verbose=True,
     vertical_filtered = despike_and_filter(vertical_raw, despike_threshold)
 
     # dual-gated lateral despike: only clip where NOT a real turn
-    safe_to_clip = (np.abs(yaw_rate) < lateral_yawrate_gate_degs) & (np.abs(lateral_g) < lateral_g_gate)
+    safe_to_clip = (np.abs(yaw_rate) < lateral_yawrate_gate_degs) | (np.abs(lateral_g) < lateral_g_gate)
     lateral_gated = lateral_raw.copy()
     clip_mask = safe_to_clip & (np.abs(lateral_raw) > lateral_clip)
     lateral_gated[clip_mask] = np.sign(lateral_raw[clip_mask]) * lateral_clip

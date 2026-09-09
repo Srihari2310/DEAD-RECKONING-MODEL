@@ -1,0 +1,776 @@
+[
+  {
+    "timestamp": "2026-09-08T22:00:11.202156",
+    "results": [
+      {
+        "trip": "Vtb02",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb02' under S-Dataset"
+      },
+      {
+        "trip": "Vtb03",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb03' under S-Dataset"
+      },
+      {
+        "trip": "Vtb04",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb04' under S-Dataset"
+      },
+      {
+        "trip": "Vtb05",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb05' under S-Dataset"
+      },
+      {
+        "trip": "Vtb06",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb06' under S-Dataset"
+      },
+      {
+        "trip": "Vtb07",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb07' under S-Dataset"
+      },
+      {
+        "trip": "Vtb08",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb08' under S-Dataset"
+      },
+      {
+        "trip": "Vtb09",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb09' under S-Dataset"
+      },
+      {
+        "trip": "Vtb10",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb10' under S-Dataset"
+      },
+      {
+        "trip": "Vtb11",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb11' under S-Dataset"
+      },
+      {
+        "trip": "Vtb12\\",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb12\\' under S-Dataset"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-08T22:08:42.047594",
+    "results": [
+      {
+        "trip": "Vtb01",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb01' under S-Dataset"
+      },
+      {
+        "trip": "Vtb02",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb02' under S-Dataset"
+      },
+      {
+        "trip": "Vtb03",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb03' under S-Dataset"
+      },
+      {
+        "trip": "Vtb04",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb04' under S-Dataset"
+      },
+      {
+        "trip": "Vtb05",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb05' under S-Dataset"
+      },
+      {
+        "trip": "Vtb06",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb06' under S-Dataset"
+      },
+      {
+        "trip": "Vtb07",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb07' under S-Dataset"
+      },
+      {
+        "trip": "Vtb08",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb08' under S-Dataset"
+      },
+      {
+        "trip": "Vtb09",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb09' under S-Dataset"
+      },
+      {
+        "trip": "Vtb10",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb10' under S-Dataset"
+      },
+      {
+        "trip": "Vtb11",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb11' under S-Dataset"
+      },
+      {
+        "trip": "Vtb12",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb12' under S-Dataset"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-08T22:14:15.346996",
+    "results": [
+      {
+        "trip": "Vtb02",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb02' under S-Dataset"
+      },
+      {
+        "trip": "Vtb03",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb03' under S-Dataset"
+      },
+      {
+        "trip": "Vtb04",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb04' under S-Dataset"
+      },
+      {
+        "trip": "Vtb05",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb05' under S-Dataset"
+      },
+      {
+        "trip": "Vtb06",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb06' under S-Dataset"
+      },
+      {
+        "trip": "Vtb07",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb07' under S-Dataset"
+      },
+      {
+        "trip": "Vtb08",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb08' under S-Dataset"
+      },
+      {
+        "trip": "Vtb09",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb09' under S-Dataset"
+      },
+      {
+        "trip": "Vtb10",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb10' under S-Dataset"
+      },
+      {
+        "trip": "Vtb11",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb11' under S-Dataset"
+      },
+      {
+        "trip": "Vtb12\\",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb12\\' under S-Dataset"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-08T22:19:49.094807",
+    "results": [
+      {
+        "trip": "Vtb10",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "ValueError: all the input array dimensions except for the concatenation axis must match exactly, but along dimension 1, the array at index 0 has size 194 and the array at index 1 has size 0"
+      },
+      {
+        "trip": "Vtb11",
+        "status": "OK",
+        "corr": 0.825,
+        "lag_rows": 0,
+        "yaw_offset": -175.25,
+        "x_shape": "(33, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vtb12",
+        "status": "OK",
+        "corr": 0.865,
+        "lag_rows": 0,
+        "yaw_offset": 175.12,
+        "x_shape": "(41, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vtb3",
+        "status": "UNTRUSTED",
+        "corr": 0.264,
+        "lag_rows": 0,
+        "yaw_offset": -103.57,
+        "x_shape": "(821, 40, 6)",
+        "note": "Weak correlation (0.264) \u2014 same red flag as Y1, do not add to training blindly"
+      },
+      {
+        "trip": "Vtb4",
+        "status": "OK",
+        "corr": 0.944,
+        "lag_rows": 8,
+        "yaw_offset": -157.04,
+        "x_shape": "(51, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vtb5",
+        "status": "OK",
+        "corr": 0.976,
+        "lag_rows": -200,
+        "yaw_offset": -34.97,
+        "x_shape": "(6415, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vtb6",
+        "status": "OK",
+        "corr": 0.52,
+        "lag_rows": 0,
+        "yaw_offset": 167.67,
+        "x_shape": "(46, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vtb7",
+        "status": "OK",
+        "corr": 0.938,
+        "lag_rows": 11,
+        "yaw_offset": 5.01,
+        "x_shape": "(42, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vtb8",
+        "status": "UNTRUSTED",
+        "corr": 0.416,
+        "lag_rows": 37,
+        "yaw_offset": -172.23,
+        "x_shape": "(60, 40, 6)",
+        "note": "Weak correlation (0.416) \u2014 same red flag as Y1, do not add to training blindly"
+      },
+      {
+        "trip": "Vtb9",
+        "status": "OK",
+        "corr": 0.717,
+        "lag_rows": 0,
+        "yaw_offset": 22.38,
+        "x_shape": "(42, 40, 6)",
+        "note": ""
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-08T22:20:47.306177",
+    "results": [
+      {
+        "trip": "Vtb02",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb02' under S-Dataset"
+      },
+      {
+        "trip": "Vtb03",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb03' under S-Dataset"
+      },
+      {
+        "trip": "Vtb04",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb04' under S-Dataset"
+      },
+      {
+        "trip": "Vtb05",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb05' under S-Dataset"
+      },
+      {
+        "trip": "Vtb06",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb06' under S-Dataset"
+      },
+      {
+        "trip": "Vtb07",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb07' under S-Dataset"
+      },
+      {
+        "trip": "Vtb08",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb08' under S-Dataset"
+      },
+      {
+        "trip": "Vtb09",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb09' under S-Dataset"
+      },
+      {
+        "trip": "Vtb10",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "ValueError: all the input array dimensions except for the concatenation axis must match exactly, but along dimension 1, the array at index 0 has size 194 and the array at index 1 has size 0"
+      },
+      {
+        "trip": "Vtb11",
+        "status": "OK",
+        "corr": 0.825,
+        "lag_rows": 0,
+        "yaw_offset": -175.25,
+        "x_shape": "(33, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vtb12\\",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "FileNotFoundError: Could not find S-file for trip 'Vtb12\\' under S-Dataset"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-08T23:08:17.022978",
+    "results": [
+      {
+        "trip": "Vtb10",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "ValueError: all the input array dimensions except for the concatenation axis must match exactly, but along dimension 1, the array at index 0 has size 194 and the array at index 1 has size 0"
+      },
+      {
+        "trip": "Vtb11",
+        "status": "OK",
+        "corr": 0.825,
+        "lag_rows": 0,
+        "yaw_offset": -175.25,
+        "x_shape": "(33, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vtb12",
+        "status": "OK",
+        "corr": 0.865,
+        "lag_rows": 0,
+        "yaw_offset": 175.12,
+        "x_shape": "(41, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vtb3",
+        "status": "UNTRUSTED",
+        "corr": 0.264,
+        "lag_rows": 0,
+        "yaw_offset": -103.57,
+        "x_shape": "(821, 40, 6)",
+        "note": "Weak correlation (0.264) \u2014 same red flag as Y1, do not add to training blindly"
+      },
+      {
+        "trip": "Vtb4",
+        "status": "OK",
+        "corr": 0.944,
+        "lag_rows": 8,
+        "yaw_offset": -157.04,
+        "x_shape": "(51, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vtb5",
+        "status": "OK",
+        "corr": 0.976,
+        "lag_rows": -200,
+        "yaw_offset": -34.97,
+        "x_shape": "(6415, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vtb6",
+        "status": "OK",
+        "corr": 0.52,
+        "lag_rows": 0,
+        "yaw_offset": 167.67,
+        "x_shape": "(46, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vtb7",
+        "status": "OK",
+        "corr": 0.938,
+        "lag_rows": 11,
+        "yaw_offset": 5.01,
+        "x_shape": "(42, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vtb8",
+        "status": "UNTRUSTED",
+        "corr": 0.416,
+        "lag_rows": 37,
+        "yaw_offset": -172.23,
+        "x_shape": "(60, 40, 6)",
+        "note": "Weak correlation (0.416) \u2014 same red flag as Y1, do not add to training blindly"
+      },
+      {
+        "trip": "Vtb9",
+        "status": "OK",
+        "corr": 0.717,
+        "lag_rows": 0,
+        "yaw_offset": 22.38,
+        "x_shape": "(42, 40, 6)",
+        "note": ""
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-08T23:53:29.199178",
+    "results": [
+      {
+        "trip": "Vtb11",
+        "status": "OK",
+        "corr": 0.825,
+        "lag_rows": 0,
+        "yaw_offset": -175.25,
+        "x_shape": "(33, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vtb12",
+        "status": "OK",
+        "corr": 0.865,
+        "lag_rows": 0,
+        "yaw_offset": 175.12,
+        "x_shape": "(41, 40, 6)",
+        "note": ""
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-08T23:53:53.648334",
+    "results": [
+      {
+        "trip": "Vtb11",
+        "status": "OK",
+        "corr": 0.825,
+        "lag_rows": 0,
+        "yaw_offset": -175.25,
+        "x_shape": "(33, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vtb12",
+        "status": "OK",
+        "corr": 0.865,
+        "lag_rows": 0,
+        "yaw_offset": 175.12,
+        "x_shape": "(41, 40, 6)",
+        "note": ""
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-08T23:58:40.267221",
+    "results": [
+      {
+        "trip": "Vtb1",
+        "status": "OK",
+        "corr": 0.951,
+        "lag_rows": 9,
+        "yaw_offset": -156.36,
+        "x_shape": "(3242, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vtb10",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "ValueError: Trip too short (195 rows) for reliable lag detection (minimum 300)"
+      },
+      {
+        "trip": "Vtb11",
+        "status": "OK",
+        "corr": 0.825,
+        "lag_rows": 0,
+        "yaw_offset": -175.25,
+        "x_shape": "(33, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vtb12",
+        "status": "OK",
+        "corr": 0.865,
+        "lag_rows": 0,
+        "yaw_offset": 175.12,
+        "x_shape": "(41, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vtb2",
+        "status": "OK",
+        "corr": 0.949,
+        "lag_rows": 5,
+        "yaw_offset": -102.3,
+        "x_shape": "(567, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vtb3",
+        "status": "UNTRUSTED",
+        "corr": 0.264,
+        "lag_rows": 0,
+        "yaw_offset": -103.57,
+        "x_shape": "(821, 40, 6)",
+        "note": "Weak correlation (0.264) \u2014 same red flag as Y1, do not add to training blindly"
+      },
+      {
+        "trip": "Vtb4",
+        "status": "OK",
+        "corr": 0.944,
+        "lag_rows": 8,
+        "yaw_offset": -157.04,
+        "x_shape": "(51, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vtb5",
+        "status": "OK",
+        "corr": 0.976,
+        "lag_rows": -200,
+        "yaw_offset": -34.97,
+        "x_shape": "(6415, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vtb6",
+        "status": "OK",
+        "corr": 0.52,
+        "lag_rows": 0,
+        "yaw_offset": 167.67,
+        "x_shape": "(46, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vtb7",
+        "status": "OK",
+        "corr": 0.938,
+        "lag_rows": 11,
+        "yaw_offset": 5.01,
+        "x_shape": "(42, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vtb8",
+        "status": "UNTRUSTED",
+        "corr": 0.416,
+        "lag_rows": 37,
+        "yaw_offset": -172.23,
+        "x_shape": "(60, 40, 6)",
+        "note": "Weak correlation (0.416) \u2014 same red flag as Y1, do not add to training blindly"
+      },
+      {
+        "trip": "Vtb9",
+        "status": "OK",
+        "corr": 0.717,
+        "lag_rows": 0,
+        "yaw_offset": 22.38,
+        "x_shape": "(42, 40, 6)",
+        "note": ""
+      }
+    ]
+  }
+]

@@ -10,9 +10,17 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 
-from .utils import _find_trip_file, _load_csv_with_fallback, find_col
+from .utils import (
+    IOVNBD_ROOT,
+    _find_trip_file,
+    _load_csv_with_fallback,
+    find_col,
+    find_iovnbd_trip_files,
+)
 
 ALIGNED_DIR = Path("preprocessing/output/01_aligned")
+MIN_ROWS_FOR_RELIABLE_LAG = 300
+MIN_OVERLAP = 30
 
 
 # ---------------------------------------------------------------------------
@@ -30,6 +38,12 @@ def detect_lag(s_df, v_df, s_lat_col, v_lat_col, v_speed_col, max_lag=50):
     onto quantization plateaus / monotonic-trend artifacts.
     """
     n = min(len(s_df), len(v_df))
+    if n < MIN_ROWS_FOR_RELIABLE_LAG:
+        raise ValueError(
+            f"Trip too short ({n} rows) for reliable lag detection "
+            f"(minimum {MIN_ROWS_FOR_RELIABLE_LAG})"
+        )
+
     s_lat_raw = s_df[s_lat_col].values[:n].astype(float)
     v_lat = v_df[v_lat_col].values[:n].astype(float)
 
@@ -46,9 +60,13 @@ def detect_lag(s_df, v_df, s_lat_col, v_lat_col, v_speed_col, max_lag=50):
     s_norm = s_diff - np.nanmean(s_diff)
     v_norm = v_diff - np.nanmean(v_diff)
 
+    effective_max_lag = min(max_lag, n - 1 - MIN_OVERLAP)
+    if effective_max_lag < 1:
+        raise ValueError(f"Trip too short ({n} rows) for reliable lag detection")
+
     best_lag = 0
     best_corr = -np.inf
-    for lag in range(-max_lag, max_lag + 1):
+    for lag in range(-effective_max_lag, effective_max_lag + 1):
         if lag < 0:
             a = s_norm[-lag:]
             b = v_norm[: len(a)]
@@ -72,7 +90,7 @@ def detect_lag(s_df, v_df, s_lat_col, v_lat_col, v_speed_col, max_lag=50):
     else:
         offset_speed_corr = np.nan
 
-    hit_boundary = abs(best_lag) == max_lag
+    hit_boundary = abs(best_lag) == effective_max_lag
     if hit_boundary:
         print(f"WARNING: detected lag ({best_lag}) is at the search boundary "
               f"(max_lag={max_lag}). The true optimum may lie beyond this window — "
@@ -117,6 +135,13 @@ def load_and_verify_trip(trip_name, s_root="S-Dataset", v_root="V-Dataset", max_
     """
     s_path = _find_trip_file(s_root, trip_name, "S")
     v_path = _find_trip_file(v_root, trip_name, "V")
+
+    # Fall back to the original IO-VNBD layout, where each trip has its own
+    # folder and filenames may use zero-padding or lowercase "v".
+    if s_path is None or v_path is None:
+        io_s_path, io_v_path = find_iovnbd_trip_files(trip_name, IOVNBD_ROOT)
+        s_path = s_path or io_s_path
+        v_path = v_path or io_v_path
 
     if s_path is None:
         raise FileNotFoundError(f"Could not find S-file for trip '{trip_name}' under {s_root}")

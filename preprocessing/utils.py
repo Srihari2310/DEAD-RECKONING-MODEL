@@ -7,12 +7,57 @@ file discovery, encoding-fallback CSV loading, and column matching.
 
 import os
 import glob
+import re
+from pathlib import Path
 import pandas as pd
+
+
+IOVNBD_ROOT = Path(r"D:\IO-VNBD\Synchronised V abd S datasets\Categorised IOVNB Dataset")
 
 
 # ---------------------------------------------------------------------------
 # File discovery
 # ---------------------------------------------------------------------------
+
+def normalize_trip(name):
+    """Normalize zero-padded trip names, e.g. Vtb01 -> Vtb1."""
+    match = re.match(r"([A-Za-z]+)0*(\d+)([a-z]?)$", name)
+    return f"{match.group(1)}{match.group(2)}{match.group(3)}" if match else name
+
+
+def find_iovnbd_trip_files(trip_name, root=IOVNBD_ROOT):
+    """Find S/V CSVs inside the matching IO-VNBD per-trip folder."""
+    target_trip_name = normalize_trip(re.sub(r"^[Vv]-", "", trip_name))
+    root = Path(root)
+    if not root.exists():
+        return None, None
+
+    for series_dir in root.iterdir():
+        if not series_dir.is_dir():
+            continue
+        for trip_dir in series_dir.iterdir():
+            if not trip_dir.is_dir():
+                continue
+            folder_trip_name = re.sub(r"^[Vv]-", "", trip_dir.name)
+            if normalize_trip(folder_trip_name).lower() != target_trip_name.lower():
+                continue
+
+            csv_files = list(trip_dir.glob("*.csv"))
+
+            def choose(prefix):
+                preferred = [f"{prefix}-{trip_name}.csv", f"{prefix}{trip_name}.csv"]
+                for name in preferred:
+                    for candidate in csv_files:
+                        if candidate.name.lower() == name.lower():
+                            return candidate
+                return next(
+                    (p for p in csv_files if p.name.lower().startswith(prefix.lower() + "-")),
+                    None,
+                )
+
+            return choose("S"), choose("V")
+
+    return None, None
 
 def _find_trip_file(root_dir, trip_name, prefix_letter):
     """
