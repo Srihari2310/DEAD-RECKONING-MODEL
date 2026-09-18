@@ -1,10 +1,10 @@
 """
-Step 8: Train the AI Dead-Reckoning model (stage [4]) on trips M and Vta2.
+Step 8: Train the AI Dead-Reckoning model (stage [4]) on the configured trips.
 1D-CNN backbone -> predicts (dx, dy) displacement per window.
 
-Reads M and Vta2 for training/validation, and Vta1a as a fully held-out test
-trip. Each training trip is split by contiguous time blocks (first 85% train,
-last 15% validation) to avoid leakage between overlapping windows.
+Each training trip is split by contiguous time blocks (first 85% train, last
+15% validation) to avoid leakage between overlapping windows. Vta1a, Vtb11,
+and Vw11 are held out for evaluation.
 """
 
 import numpy as np
@@ -32,11 +32,18 @@ DATA_PATHS = [
     "preprocessing/output/06_windows/Vtb6_windows.npz",
     "preprocessing/output/06_windows/Vtb7_windows.npz",
     "preprocessing/output/06_windows/Vtb9_windows.npz",
-    "preprocessing/output/06_windows/Vtb11_windows.npz",
+    # Vtb11 removed -- now a held-out test trip
     "preprocessing/output/06_windows/Vtb12_windows.npz",
+    "preprocessing/output/06_windows/S1_windows.npz",
+    "preprocessing/output/06_windows/S2_windows.npz",
+    "preprocessing/output/06_windows/S3a_windows.npz",
+    "preprocessing/output/06_windows/s3b_windows.npz",
+    "preprocessing/output/06_windows/s3c_windows.npz",
+    # Vw series, added for the expanded training experiment; Vw11 remains held out.
+    
 ]
 TEST_PATH = "preprocessing/output/06_windows/Vta1a_windows.npz"
-TEST_PATH = "preprocessing/output/06_windows/Vta1a_windows.npz"
+
 MODEL_OUT = "preprocessing/output/models/dr_model.pt"
 TEST_SPLIT_OUT = "preprocessing/output/test_splits/Vta1a_test_split.npz"
 

@@ -78,7 +78,6 @@ def integrate_trajectory_with_periodic_correction(pred_local, gyro_yaw,
     return global_disp
 
 
-
 class DRNet(nn.Module):
     def __init__(self, in_channels=6):
         super().__init__()
@@ -119,7 +118,7 @@ def main():
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = DRNet(in_channels=X_test.shape[2]).to(device)
-    model.load_state_dict(torch.load(MODEL_PATH, map_location=device, weights_only=True))
+    model.load_state_dict(torch.load(MODEL_PATH, map_location=device))
     model.eval()
 
     X_tensor = torch.tensor(X_test, dtype=torch.float32).permute(0, 2, 1).to(device)
@@ -163,13 +162,11 @@ def main():
     tracked_pos_err = np.linalg.norm(tracked_trajectory - true_trajectory, axis=1)
 
     correction_intervals_windows = {
-        "every 1s (1 window)": 1,
         "every 10s (10 windows)": 10,
         "every 30s (30 windows)": 30,
         "every 60s (60 windows)": 60,
         "every 120s (120 windows)": 120,
         "every 300s (300 windows)": 300,
-        "NEVER (pure gyro)": None,
     }
     print("Periodic heading-correction sweep:")
     print(f"{'Interval':<26}{'Drift %':>10}")
