@@ -91,15 +91,16 @@ class DRNet(nn.Module):
             nn.AdaptiveAvgPool1d(1),
         )
         self.head = nn.Sequential(
-            nn.Flatten(),
-            nn.Linear(64, 32),
+            nn.Linear(64 + 1, 32),
             nn.ReLU(),
-            nn.Linear(32, 2),
+            nn.Linear(32, 3),
         )
 
-    def forward(self, x):
-        x = self.conv(x)
-        return self.head(x)
+    def forward(self, x, v0):
+        feat = self.conv(x).flatten(1)
+        v0 = v0.unsqueeze(1)
+        combined = torch.cat([feat, v0], dim=1)
+        return self.head(combined)
 
 
 def rotate_local_to_global(vec_local, heading):
@@ -115,6 +116,7 @@ def main():
     X_test, Y_test = data["X"], data["Y"]           # Y_test = y_local (truth, local frame)
     heading_start = data["heading_start"]            # per-window heading, radians
     y_global_true = data["y_global"]                 # global-frame truth, for sanity check
+    v_start = data["v_start"]                         # model input speed, m/s
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = DRNet(in_channels=X_test.shape[2]).to(device)
@@ -122,8 +124,10 @@ def main():
     model.eval()
 
     X_tensor = torch.tensor(X_test, dtype=torch.float32).permute(0, 2, 1).to(device)
+    v0_tensor = torch.tensor(v_start, dtype=torch.float32).to(device)
     with torch.no_grad():
-        pred_local = model(X_tensor).cpu().numpy()  # (N, 2) predicted local (dx, dy)
+        pred = model(X_tensor, v0_tensor).cpu().numpy()
+        pred_local = pred[:, :2]  # (N, 2) predicted local (dx, dy)
 
     # Existing evaluation: rotate each window using its saved ground-truth
     # heading_start. This is retained as the reference/baseline.
@@ -135,8 +139,16 @@ def main():
     print(f"Sanity check -- mean |rotated_true - saved_y_global|: {sanity_diff:.4f} m (should be ~0)")
 
     # Deployment-style evaluation: bootstrap from the first heading only, then
-    # track heading using the per-window gyro yaw-rate channel (X[:, :, 3]).
-    gyro_yaw_test = X_test[:, :, 3]
+    # track heading using the projected 3-axis gyro yaw-rate channel.
+    GYRO_W = -np.array([0.568, 0.831, 1.123])   # heading rate = -(V YawRate convention); try -np.array([0.271, 0.965, 1.374]) too
+    gyro_yaw_test = X_test[:, :, 3:6] @ GYRO_W  # (N, 40) heading rate, rad/s
+    dh_true = np.diff(np.unwrap(heading_start))
+    dh_est = np.sum(gyro_yaw_test[:-1, :10], axis=1) * 0.1
+    m = np.abs(dh_true) < 1.0
+    corr = np.corrcoef(dh_true[m], dh_est[m])[0, 1]
+    slope = np.polyfit(dh_est[m], dh_true[m], 1)[0]
+    print(f"heading-rate check: corr={corr:.3f} slope={slope:.3f}")
+    print(f"heading_start range: {heading_start.min():.2f} .. {heading_start.max():.2f}")
     pred_global_tracked = integrate_trajectory_with_tracked_heading(
         pred_local, gyro_yaw_test, heading_start[0], dt=0.1, stride_samples=10
     )

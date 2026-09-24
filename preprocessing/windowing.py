@@ -77,8 +77,15 @@ def window_trip(trip_name, output_dir="preprocessing/output", verbose=True,
     dx = v_df["dx"].values.astype(float)
     dy = v_df["dy"].values.astype(float)
     heading = v_df["heading_rad"].values.astype(float)
+    if "speed_ms" not in v_df.columns:
+        raise ValueError(
+            f"[{trip_name}] V-labels file has no speed_ms column -- "
+            f"re-run derive_labels() with the updated version first."
+        )
+    speed_ms = v_df["speed_ms"].values.astype(float)
 
     X_list, y_local_list, y_global_list, h0_list = [], [], [], []
+    v_start_list, v_end_list = [], []
 
     for start in range(0, n - window_size + 1, stride):
         end = start + window_size
@@ -87,6 +94,8 @@ def window_trip(trip_name, output_dir="preprocessing/output", verbose=True,
         dx_g = dx[start:end].sum()
         dy_g = dy[start:end].sum()
         h0 = heading[start]  # heading at window START, not average/end
+        v_start = speed_ms[start]
+        v_end = speed_ms[end - 1]
 
         # Global convention (derive_labels): dx = v*sin(h), dy = v*cos(h),
         # i.e. h measured clockwise from the y-axis (compass-style).
@@ -101,11 +110,15 @@ def window_trip(trip_name, output_dir="preprocessing/output", verbose=True,
         y_local_list.append([dx_local, dy_local])
         y_global_list.append([dx_g, dy_g])
         h0_list.append(h0)
+        v_start_list.append(v_start)
+        v_end_list.append(v_end)
 
     X = np.stack(X_list, axis=0)
     y_local = np.array(y_local_list, dtype=np.float32)
     y_global = np.array(y_global_list, dtype=np.float32)
     heading_start = np.array(h0_list, dtype=np.float32)
+    v_start_arr = np.array(v_start_list, dtype=np.float32)
+    v_end_arr = np.array(v_end_list, dtype=np.float32)
 
     n_windows = X.shape[0]
     if verbose:
@@ -119,7 +132,7 @@ def window_trip(trip_name, output_dir="preprocessing/output", verbose=True,
 
     out_path = os.path.join(WINDOWS_DIR, f"{trip_name}_windows.npz")
     np.savez(out_path, X=X, y_local=y_local, y_global=y_global,
-             heading_start=heading_start)
+             heading_start=heading_start, v_start=v_start_arr, v_end=v_end_arr)
     if verbose:
         print(f"[{trip_name}] Saved: {out_path}")
 
@@ -128,5 +141,7 @@ def window_trip(trip_name, output_dir="preprocessing/output", verbose=True,
         "y_local": y_local,
         "y_global": y_global,
         "heading_start": heading_start,
+        "v_start": v_start_arr,
+        "v_end": v_end_arr,
         "out_path": out_path,
     }

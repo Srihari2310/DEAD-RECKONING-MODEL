@@ -62,6 +62,7 @@ def derive_labels(trip_name, output_dir="preprocessing/output", verbose=True,
     v_df["x_cum"] = x_cum
     v_df["y_cum"] = y_cum
     v_df["heading_rad"] = heading_rad
+    v_df["speed_ms"] = speed_ms
     # NOTE: dx/dy/x_cum/y_cum stay GLOBAL/compass-frame -- correct and needed
     # for route-thumbnail validation and final trajectory reconstruction.
     # They are NOT the ML training target. heading_rad is saved so Step 6

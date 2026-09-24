@@ -44,7 +44,7 @@ DATA_PATHS = [
 ]
 TEST_PATH = "preprocessing/output/06_windows/Vta1a_windows.npz"
 
-MODEL_OUT = "preprocessing/output/models/dr_model.pt"
+MODEL_OUT = "preprocessing/output/models/dr_model_v0noise.pt"
 TEST_SPLIT_OUT = "preprocessing/output/test_splits/Vta1a_test_split.npz"
 
 VAL_FRACTION = 0.15
@@ -56,15 +56,17 @@ PATIENCE = 8  # early stopping
 
 
 class WindowDataset(Dataset):
-    def __init__(self, X, Y):
+    def __init__(self, X, Y, V0, VEND):
         self.X = torch.tensor(X, dtype=torch.float32).permute(0, 2, 1)  # (N, C, T) for Conv1d
-        self.Y = torch.tensor(Y, dtype=torch.float32)
+        self.Y = torch.tensor(Y, dtype=torch.float32)          # (N, 2) dx, dy
+        self.V0 = torch.tensor(V0, dtype=torch.float32)        # (N,)
+        self.VEND = torch.tensor(VEND, dtype=torch.float32)    # (N,)
 
     def __len__(self):
         return len(self.X)
 
     def __getitem__(self, idx):
-        return self.X[idx], self.Y[idx]
+        return self.X[idx], self.V0[idx], self.Y[idx], self.VEND[idx]
 
 
 class DRNet(nn.Module):
@@ -80,15 +82,16 @@ class DRNet(nn.Module):
             nn.AdaptiveAvgPool1d(1),  # global pooling -> (N, 64, 1)
         )
         self.head = nn.Sequential(
-            nn.Flatten(),
-            nn.Linear(64, 32),
+            nn.Linear(64 + 1, 32),   # +1 for v0
             nn.ReLU(),
-            nn.Linear(32, 2),  # (dx, dy)
+            nn.Linear(32, 3),        # (dx, dy, v_end)
         )
 
-    def forward(self, x):
-        x = self.conv(x)
-        return self.head(x)
+    def forward(self, x, v0):
+        feat = self.conv(x).flatten(1)          # (N, 64)
+        v0 = v0.unsqueeze(1)                    # (N, 1)
+        combined = torch.cat([feat, v0], dim=1) # (N, 65)
+        return self.head(combined)
 
 
 def physical_regularizer(pred, dt_window=4.0):
@@ -98,66 +101,90 @@ def physical_regularizer(pred, dt_window=4.0):
     return (implausible ** 2).mean()
 
 
+mse = nn.MSELoss()
+
+
+def compute_loss(pred, yb, vend_true):
+    pred_disp, pred_vend = pred[:, :2], pred[:, 2]
+    disp_loss = mse(pred_disp, yb)
+    vend_loss = mse(pred_vend, vend_true)
+    reg = physical_regularizer(pred_disp)
+    return disp_loss + 4.0 * vend_loss + 0.01 * reg
+
+
 def split_trip(d, val_fraction=VAL_FRACTION):
     """Split one trip chronologically, reserving its final windows for validation."""
     n = len(d["X"])
     split = int(n * (1 - val_fraction))
     X_train, Y_train = d["X"][:split], d["y_local"][:split]
     X_val, Y_val = d["X"][split:], d["y_local"][split:]
-    return X_train, Y_train, X_val, Y_val
+    V0_train, VEND_train = d["v_start"][:split], d["v_end"][:split]
+    V0_val, VEND_val = d["v_start"][split:], d["v_end"][split:]
+    return X_train, Y_train, V0_train, VEND_train, X_val, Y_val, V0_val, VEND_val
 
 
 def main():
     os.makedirs(os.path.dirname(MODEL_OUT), exist_ok=True)
     os.makedirs(os.path.dirname(TEST_SPLIT_OUT), exist_ok=True)
 
-    train_X_parts, train_Y_parts = [], []
-    val_X_parts, val_Y_parts = [], []
+    train_X_parts, train_Y_parts, train_V0_parts, train_VEND_parts = [], [], [], []
+    val_X_parts, val_Y_parts, val_V0_parts, val_VEND_parts = [], [], [], []
 
     for path in DATA_PATHS:
         d = np.load(path)
-        X_train_trip, Y_train_trip, X_val_trip, Y_val_trip = split_trip(d)
+        (X_train_trip, Y_train_trip, V0_train_trip, VEND_train_trip,
+         X_val_trip, Y_val_trip, V0_val_trip, VEND_val_trip) = split_trip(d)
         train_X_parts.append(X_train_trip)
         train_Y_parts.append(Y_train_trip)
+        train_V0_parts.append(V0_train_trip)
+        train_VEND_parts.append(VEND_train_trip)
         val_X_parts.append(X_val_trip)
         val_Y_parts.append(Y_val_trip)
+        val_V0_parts.append(V0_val_trip)
+        val_VEND_parts.append(VEND_val_trip)
 
     X_train = np.concatenate(train_X_parts)
     Y_train = np.concatenate(train_Y_parts)
+    V0_train = np.concatenate(train_V0_parts)
+    VEND_train = np.concatenate(train_VEND_parts)
     X_val = np.concatenate(val_X_parts)
     Y_val = np.concatenate(val_Y_parts)
+    V0_val = np.concatenate(val_V0_parts)
+    VEND_val = np.concatenate(val_VEND_parts)
 
     d_test = np.load(TEST_PATH)
     X_test, Y_test = d_test["X"], d_test["y_local"]
+    V0_test, VEND_test = d_test["v_start"], d_test["v_end"]
 
     print(f"Train: {len(X_train)}  Val: {len(X_val)}  Test: {len(X_test)}")
 
     g = torch.Generator()
     g.manual_seed(SEED)
     train_loader = DataLoader(
-        WindowDataset(X_train, Y_train),
+        WindowDataset(X_train, Y_train, V0_train, VEND_train),
         batch_size=BATCH_SIZE,
         shuffle=True,
         generator=g,
     )
-    val_loader = DataLoader(WindowDataset(X_val, Y_val), batch_size=BATCH_SIZE, shuffle=False)
+    val_loader = DataLoader(WindowDataset(X_val, Y_val, V0_val, VEND_val), batch_size=BATCH_SIZE, shuffle=False)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = DRNet(in_channels=X_train.shape[2]).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=LR)
-    mse = nn.MSELoss()
-
     best_val_loss = float("inf")
     patience_counter = 0
 
     for epoch in range(1, EPOCHS + 1):
         model.train()
         train_loss = 0.0
-        for xb, yb in train_loader:
-            xb, yb = xb.to(device), yb.to(device)
+        for xb, v0b, yb, vend_true in train_loader:
+            xb, v0b = xb.to(device), v0b.to(device)
+            yb, vend_true = yb.to(device), vend_true.to(device)
             optimizer.zero_grad()
-            pred = model(xb)
-            loss = mse(pred, yb) + 0.01 * physical_regularizer(pred)
+            sigma = torch.rand(v0b.shape[0], device=v0b.device) * 2.0
+            v0_in = torch.clamp(v0b + torch.randn_like(v0b) * sigma, min=0.0)
+            pred = model(xb, v0_in)
+            loss = compute_loss(pred, yb, vend_true)
             loss.backward()
             optimizer.step()
             train_loss += loss.item() * len(xb)
@@ -166,10 +193,11 @@ def main():
         model.eval()
         val_loss = 0.0
         with torch.no_grad():
-            for xb, yb in val_loader:
-                xb, yb = xb.to(device), yb.to(device)
-                pred = model(xb)
-                loss = mse(pred, yb)
+            for xb, v0b, yb, vend_true in val_loader:
+                xb, v0b = xb.to(device), v0b.to(device)
+                yb, vend_true = yb.to(device), vend_true.to(device)
+                pred = model(xb, v0b)
+                loss = compute_loss(pred, yb, vend_true)
                 val_loss += loss.item() * len(xb)
         val_loss /= len(X_val)
 
@@ -191,7 +219,8 @@ def main():
     # save test set indices/arrays for later evaluation (position integrator, drift check)
     np.savez(TEST_SPLIT_OUT,
              X=X_test, Y=Y_test,
-             y_global=d_test["y_global"], heading_start=d_test["heading_start"])
+             y_global=d_test["y_global"], heading_start=d_test["heading_start"],
+             v_start=V0_test, v_end=VEND_test)
     print(f"Saved test split: {TEST_SPLIT_OUT}")
 
 
