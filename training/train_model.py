@@ -181,7 +181,7 @@ def main():
             xb, v0b = xb.to(device), v0b.to(device)
             yb, vend_true = yb.to(device), vend_true.to(device)
             optimizer.zero_grad()
-            sigma = torch.rand(v0b.shape[0], device=v0b.device) * 2.0
+            sigma = torch.rand_like(v0b) * 2.0
             v0_in = torch.clamp(v0b + torch.randn_like(v0b) * sigma, min=0.0)
             pred = model(xb, v0_in)
             loss = compute_loss(pred, yb, vend_true)
@@ -206,7 +206,7 @@ def main():
         if val_loss < best_val_loss:
             best_val_loss = val_loss
             patience_counter = 0
-            torch.save(model.state_dict(), MODEL_OUT)
+            torch.save(model.state_dict(), "preprocessing/output/models/dr_model_v0noise.pt")
         else:
             patience_counter += 1
             if patience_counter >= PATIENCE:

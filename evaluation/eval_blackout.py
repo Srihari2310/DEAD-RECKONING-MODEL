@@ -10,6 +10,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from pathlib import Path
+import argparse
 
 sys.path.append(str(Path(__file__).resolve().parent))
 sys.path.append(str(Path(__file__).resolve().parent.parent))
@@ -25,10 +26,10 @@ WEIGHT_SETS = {
     "full-fit mix":     -np.array([0.568, 0.831, 1.123]),
     "first-10% mix":    -np.array([0.271, 0.965, 1.374]),
 }
-DURATIONS_S = [30, 60, 120, 300]     # 1 window = 1 s
+DURATIONS_S = [30, 60, 120]     # 1 window = 1 s
 START_STEP = 30                      # candidate start every 30 windows
 MIN_SPEED_KMH = 20.0
-RESET_S = [10, 15, 20, 30]           # seconds; windows advance 1s each
+RESET_S = (10, 15, 20, 30)           # seconds; windows advance 1s each
 ACC_T = 1.0
 GYR_T = 0.05
 GYRO_W = -np.array([0.568, 0.831, 1.123])
@@ -61,7 +62,42 @@ class DRNet(nn.Module):
         return self.head(combined)
 
 
-def main():
+def prepare_test_split(trip):
+    """Load or create the evaluation split for a windowed trip."""
+    split_path = Path(f"preprocessing/output/test_splits/{trip}_test_split.npz")
+    if split_path.exists():
+        return split_path
+
+    windows_path = Path(f"preprocessing/output/06_windows/{trip}_windows.npz")
+    if not windows_path.exists():
+        raise FileNotFoundError(
+            f"No test split or window file for trip {trip}: {windows_path}"
+        )
+    w = np.load(windows_path)
+    y_local = w["Y"] if "Y" in w.files else w["y_local"]
+    required = ("X", "y_global", "heading_start", "v_start", "v_end")
+    missing = [key for key in required if key not in w.files]
+    if missing:
+        raise ValueError(f"Window file {windows_path} is missing: {missing}")
+    split_path.parent.mkdir(parents=True, exist_ok=True)
+    np.savez(split_path, X=w["X"], Y=y_local, y_global=w["y_global"],
+             heading_start=w["heading_start"], v_start=w["v_start"],
+             v_end=w["v_end"])
+    print(f"Created test split: {split_path}")
+    return split_path
+
+
+def main(trip="Vta1a"):
+    global TEST_PATH
+    TEST_PATH = str(prepare_test_split(trip))
+    graph_path = Path(f"preprocessing/output/osm_cache/{trip.lower()}_roads.graphml")
+    origin_path = Path(f"preprocessing/output/osm_cache/{trip.lower()}_origin.json")
+    if not graph_path.exists() or not origin_path.exists():
+        raise FileNotFoundError(
+            f"Missing OSM cache for {trip}. Expected:\n"
+            f"  {graph_path}\n  {origin_path}"
+        )
+
     d = np.load(TEST_PATH)
     X, Y = d["X"], d["Y"]
     heading_start, y_global = d["heading_start"], d["y_global"]
@@ -94,7 +130,9 @@ def main():
           f"({100 * stop_mask.mean():.2f}%)")
 
     print("Loading road network...")
-    matcher = RoadMatcher()
+    matcher = RoadMatcher(
+        graph_path=graph_path, origin_path=origin_path, snap_gate_m=20.0
+    )
     n = len(X)
 
     for wname, W in WEIGHT_SETS.items():
@@ -118,12 +156,15 @@ def main():
                 for key, kw in (("gt", dict(heading_true=heading_start,
                                              use_true_v0=True, v0_true=v_start)),
                                 ("gt_heading_chained_v0", dict(
-                                    heading_true=heading_start, use_true_v0=False)),
-                                ("gyro", dict()),
-                                ("mm", dict(matcher=matcher))):
+                                    heading_true=heading_start, use_true_v0=False,
+                                    v0_true=v_start)),
+                                ("gyro", dict(v0_true=v_start)),
+                                ("mm", dict(matcher=matcher, v0_true=v_start,
+                                             use_viterbi_lite=True))):
                     p, mf = dead_reckon_blackout(
                         None, rate, p0, h0, s, dur,
-                        predict_fn=predict_window, v0_start=v_start, **kw)
+                        predict_fn=predict_window, v0_start=v_start,
+                        low_speed_thresh=3.0, bootstrap_window_count=24, **kw)
                     res[key].append(100 * np.linalg.norm(p - target) / dist)
                     if key == "mm":
                         frac.append(mf)
@@ -134,6 +175,9 @@ def main():
                   f"{np.median(m):>8.1f}% | "
                   f"{100*(m<10).mean():>7.0f}% {100*(y<10).mean():>8.0f}% | "
                   f"{100*np.mean(frac):.0f}%")
+            print(f"gyro+map MEAN: {np.mean(m):.1f}%  (median: {np.median(m):.1f}%)")
+            print(f"runs with matched<20%: {sum(1 for f in frac if f < 0.2)}/{len(frac)}")
+            print(f"runs with matched>80%: {sum(1 for f in frac if f > 0.8)}/{len(frac)}")
 
         # Speed re-anchoring controls, evaluated with both GT and gyro
         # heading. Keep this diagnostic on the primary heading-rate mix to
@@ -160,11 +204,13 @@ def main():
                                               gyr_threshold=GYR_T)
                                          if use_zupt
                                          else {})
+                        h0 = heading_start[s]
                         p, _ = dead_reckon_blackout(
-                            None, rate, p0, heading_start[s], s, dur,
+                            None, rate, p0, h0, s, dur,
                             heading_true=heading_start if heading_mode == "gt" else None,
                             predict_fn=predict_window, v0_start=v_start,
                             rng=rng, **zupt_controls,
+                            low_speed_thresh=3.0, bootstrap_window_count=24,
                             **controls)
                         errors.append(100 * np.linalg.norm(p - target) / dist)
                     medians.append(np.median(errors))
@@ -213,4 +259,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Evaluate blackout runs for a trip")
+    parser.add_argument("--trip", default="Vta1a", help="trip name, e.g. Vfa01")
+    args = parser.parse_args()
+    main(args.trip)

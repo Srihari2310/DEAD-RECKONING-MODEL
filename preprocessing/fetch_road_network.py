@@ -5,23 +5,28 @@ the projected graph into the SAME local ENU frame as x_cum/y_cum
 (origin = first row of the aligned V-file, east-positive X, north-positive Y).
 """
 
+import argparse
 import osmnx as ox
 import pandas as pd
 import json
 from pathlib import Path
 
 CACHE_DIR = Path("preprocessing/output/osm_cache")
-GRAPH_PATH = CACHE_DIR / "vta1a_roads.graphml"
-ORIGIN_PATH = CACHE_DIR / "vta1a_origin.json"
-
-V_ALIGNED_PATH = "preprocessing/output/01_aligned/V-Vta1a_aligned.csv"
 BUFFER_DEG = 0.01
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--trip", default="Vta1a", help="aligned trip name, e.g. Vfa01")
+    args = parser.parse_args()
+    trip = args.trip
+    graph_path = CACHE_DIR / f"{trip.lower()}_roads.graphml"
+    origin_path = CACHE_DIR / f"{trip.lower()}_origin.json"
+    v_aligned_path = Path(f"preprocessing/output/01_aligned/V-{trip}_aligned.csv")
+
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
-    df = pd.read_csv(V_ALIGNED_PATH)
+    df = pd.read_csv(v_aligned_path)
     lat_col = "Latitude (degrees)"
     lon_col = "Longitude (degrees)"
 
@@ -44,13 +49,13 @@ def main():
     G = ox.graph_from_bbox((west, south, east, north), network_type="all")    
     print(f"Fetched graph: {len(G.nodes)} nodes, {len(G.edges)} edges")
 
-    ox.save_graphml(G, GRAPH_PATH)
+    ox.save_graphml(G, graph_path)
 
-    with open(ORIGIN_PATH, "w") as f:
+    with open(origin_path, "w") as f:
         json.dump({"origin_lat": origin_lat, "origin_lon": origin_lon}, f)
 
-    print(f"Saved graph: {GRAPH_PATH}")
-    print(f"Saved origin: {ORIGIN_PATH}")
+    print(f"Saved graph: {graph_path}")
+    print(f"Saved origin: {origin_path}")
 
 
 if __name__ == "__main__":

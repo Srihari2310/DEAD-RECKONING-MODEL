@@ -31,6 +31,15 @@ DISP_SCALE = 10.0 / 40.0   # stride / window length
 SAMPLE_SPACING_M = 10.0
 
 
+def circular_mean(angles):
+    """Return the wrap-aware mean of angles in radians."""
+    angles = np.asarray(angles, dtype=float)
+    if angles.size == 0:
+        raise ValueError("circular_mean requires at least one angle")
+    return float(np.arctan2(np.mean(np.sin(angles)),
+                            np.mean(np.cos(angles))))
+
+
 class RoadMatcher:
     def __init__(self, graph_path=GRAPH_PATH, origin_path=ORIGIN_PATH,
                  snap_gate_m=20.0):
@@ -65,11 +74,27 @@ class RoadMatcher:
 
         self.segments = np.array(segs)
         self.pt_seg = np.array(pt_seg)
+        # build segment adjacency (segments sharing an endpoint = adjacent)
+        from collections import defaultdict
+        endpoint_map = defaultdict(list)
+        for sid, (x1, y1, x2, y2) in enumerate(segs):
+            endpoint_map[(round(x1, 1), round(y1, 1))].append(sid)
+            endpoint_map[(round(x2, 1), round(y2, 1))].append(sid)
+        self.adjacent = defaultdict(set)
+        for pts_ in endpoint_map.values():
+            for a in pts_:
+                for b in pts_:
+                    if a != b:
+                        self.adjacent[a].add(b)
+        self.last_seg = None
+        self.recent_bearings = []  # last few matched segment bearings
         self.tree = cKDTree(np.array(pts))
         print(f"RoadMatcher: {len(self.segments)} segments, {len(pts)} sample points")
 
     def nearest_segment(self, x, y, k=40, heading_estimate=None,
-                        snap_gate_m=20.0, max_angle_deg=60.0):
+                        snap_gate_m=None, max_angle_deg=60.0):
+        if snap_gate_m is None:
+            snap_gate_m = self.snap_gate_m
         _, pidx = self.tree.query([x, y], k=k)
         seg_ids = np.unique(self.pt_seg[np.atleast_1d(pidx)])
 
@@ -87,11 +112,51 @@ class RoadMatcher:
                 d = (bearing - heading_estimate + np.pi) % (2 * np.pi) - np.pi
                 if abs(d) > np.radians(max_angle_deg):
                     continue
-            if dist < best_dist:
-                best_dist, best = dist, (px, py, bearing)
+            # trend-consistency penalty (uses recent matched bearings, not just adjacency)
+            trend_penalty = 0.0
+            if self.recent_bearings:
+                avg_bearing = np.angle(np.mean(np.exp(1j * np.array(self.recent_bearings))))
+                d = (bearing - avg_bearing + np.pi) % (2*np.pi) - np.pi
+                trend_penalty = (abs(d) / np.pi) * 40.0  # scales 0-40m penalty
+
+            adj_penalty = 0.0
+            if self.last_seg is not None and sid != self.last_seg and sid not in self.adjacent[self.last_seg]:
+                adj_penalty = 15.0
+
+            score = dist + trend_penalty + adj_penalty
+            if score < best_dist:
+                best_dist, best = score, (px, py, bearing, sid)
         if best is None:
             return None
+        self.last_seg = best[3]
+        self.recent_bearings.append(best[2])
+        if len(self.recent_bearings) > 3:
+            self.recent_bearings.pop(0)
         return best[0], best[1], best[2], best_dist
+
+    def top_k_segments(self, x, y, k=3, heading_estimate=None,
+                       snap_gate_m=None):
+        """Return up to k candidates as (dist, px, py, bearing, segment_id)."""
+        gate = self.snap_gate_m if snap_gate_m is None else snap_gate_m
+        _, pidx = self.tree.query([x, y], k=40)
+        seg_ids = np.unique(self.pt_seg[np.atleast_1d(pidx)])
+        candidates = []
+        for sid in seg_ids:
+            x1, y1, x2, y2 = self.segments[sid]
+            dist, px, py = self._point_segment_distance(x, y, x1, y1, x2, y2)
+            if dist > gate:
+                continue
+            bearing = np.arctan2(x2 - x1, y2 - y1)
+            if heading_estimate is not None:
+                d = (bearing - heading_estimate + np.pi) % (2 * np.pi) - np.pi
+                if abs(d) > np.pi / 2:
+                    bearing = (bearing + np.pi) % (2 * np.pi) - np.pi
+                d = (bearing - heading_estimate + np.pi) % (2 * np.pi) - np.pi
+                if abs(d) > np.radians(60.0):
+                    continue
+            candidates.append((dist, px, py, bearing, sid))
+        candidates.sort(key=lambda c: c[0])
+        return candidates[:k]
 
     @staticmethod
     def _point_segment_distance(px, py, x1, y1, x2, y2):
@@ -102,6 +167,58 @@ class RoadMatcher:
         return np.hypot(px - qx, py - qy), qx, qy
 
 
+def viterbi_lite_match(matcher, positions, heading_estimates, k=3,
+                       lookback=3, w_dist=1.0, w_bearing_deg=1.0,
+                       w_switch_penalty=15.0, previous_segment_id=None):
+    """Choose the current map candidate using a short rolling DP window."""
+    if not positions:
+        return None
+    start = max(0, len(positions) - lookback)
+    step_candidates = []
+    for i in range(start, len(positions)):
+        cands = matcher.top_k_segments(
+            positions[i][0], positions[i][1], k=k,
+            heading_estimate=heading_estimates[i]
+        )
+        step_candidates.append(cands if cands else [None])
+
+    first_costs = []
+    for cand in step_candidates[0]:
+        cost = cand[0] * w_dist if cand is not None else 50.0
+        if (cand is not None and previous_segment_id is not None and
+                cand[4] != previous_segment_id):
+            cost += w_switch_penalty
+        first_costs.append(cost)
+    dp = [first_costs]
+    backptr = [[None] * len(step_candidates[0])]
+    for i in range(1, len(step_candidates)):
+        dp.append([])
+        backptr.append([])
+        for j, cand in enumerate(step_candidates[i]):
+            best_score, best_prev = np.inf, None
+            cand_bearing = cand[3] if cand is not None else None
+            for pj, prev_cand in enumerate(step_candidates[i - 1]):
+                prev_bearing = prev_cand[3] if prev_cand is not None else None
+                transition_penalty = 0.0
+                if cand_bearing is not None and prev_bearing is not None:
+                    db = abs((cand_bearing - prev_bearing + np.pi) %
+                             (2 * np.pi) - np.pi)
+                    transition_penalty = np.degrees(db) * w_bearing_deg
+                switch_penalty = 0.0
+                if cand is not None and prev_cand is not None:
+                    if cand[4] != prev_cand[4]:
+                        switch_penalty = w_switch_penalty
+                score = dp[i - 1][pj] + transition_penalty + switch_penalty
+                if score < best_score:
+                    best_score, best_prev = score, pj
+            step_cost = cand[0] * w_dist if cand is not None else 50.0
+            dp[i].append(best_score + step_cost)
+            backptr[i].append(best_prev)
+
+    best_j = int(np.argmin(dp[-1]))
+    return step_candidates[-1][best_j]
+
+
 def dead_reckon_blackout(pred_local, gyro_rate, start_pos, start_heading,
                          start, n_windows, matcher=None,
                          disp_scale=DISP_SCALE, dt=0.1, stride_samples=10,
@@ -110,7 +227,12 @@ def dead_reckon_blackout(pred_local, gyro_rate, start_pos, start_heading,
                          speed_reset_interval=None, v0_ema_alpha=0.25,
                          v0_noise_std=0.0, rng=None, use_zupt=False,
                          acc_feature=None, gyr_feature=None,
-                         acc_threshold=None, gyr_threshold=None):
+                         acc_threshold=None, gyr_threshold=None,
+                         low_speed_thresh=3.0, bootstrap_window_count=24,
+                         return_trace=False, use_viterbi_lite=False,
+                         viterbi_k=3, viterbi_lookback=3,
+                         viterbi_w_dist=1.0, viterbi_w_bearing_deg=1.0,
+                         viterbi_w_switch_penalty=15.0):
     """
     Simulate a GPS blackout over windows [start, start+n_windows).
     Starts from a KNOWN position/heading (what the app has from GPS just
@@ -126,7 +248,15 @@ def dead_reckon_blackout(pred_local, gyro_rate, start_pos, start_heading,
       v0_noise_std       -> Gaussian noise std added to the model's v0 input
       use_zupt           -> set the next v0 to zero when stop features pass
                             both thresholds
-    Returns (final_xy, matched_fraction).
+      low_speed_thresh   -> suppress gyro heading updates when the true speed
+                            is below this threshold (m/s), treating yaw as
+                            bias/noise during crawling starts
+      bootstrap_window_count -> number of initial windows eligible for the
+                                trip-start low-speed artifact exception
+      use_viterbi_lite -> use the optional rolling top-k map candidate scorer
+                          when matcher is provided
+    Returns (final_xy, matched_fraction), or additionally the per-window
+    position/heading trace when return_trace=True.
     """
     pos = np.array(start_pos, dtype=float)
     heading = float(start_heading)
@@ -134,6 +264,10 @@ def dead_reckon_blackout(pred_local, gyro_rate, start_pos, start_heading,
         raise ValueError("v0_start is required when predict_fn is provided")
     if (speed_reset_interval is not None or use_true_v0) and v0_true is None:
         raise ValueError("v0_true is required for true-speed resets")
+    if low_speed_thresh < 0.0:
+        raise ValueError("low_speed_thresh must be non-negative")
+    if bootstrap_window_count < 0:
+        raise ValueError("bootstrap_window_count must be non-negative")
     if not 0.0 <= v0_ema_alpha <= 1.0:
         raise ValueError("v0_ema_alpha must be between 0 and 1")
     if use_zupt:
@@ -145,6 +279,13 @@ def dead_reckon_blackout(pred_local, gyro_rate, start_pos, start_heading,
         rng = np.random.default_rng()
     v0 = float(v0_start[start] if np.ndim(v0_start) else v0_start) if predict_fn else None
     matched = 0
+    trace = [] if return_trace else None
+    recent_positions = []
+    recent_headings = []
+    last_segment_id = None
+    if matcher is not None:
+        matcher.last_seg = None
+        matcher.recent_bearings = []
     for i in range(start, start + n_windows):
         if heading_true is not None:
             heading = float(heading_true[i])
@@ -169,13 +310,45 @@ def dead_reckon_blackout(pred_local, gyro_rate, start_pos, start_heading,
         pos[1] += -dxl * np.sin(heading) + dyl * np.cos(heading)
 
         if matcher is not None:
-            m = matcher.nearest_segment(pos[0], pos[1], heading_estimate=heading)
+            if use_viterbi_lite:
+                recent_positions.append(pos.copy())
+                recent_headings.append(heading)
+                recent_positions = recent_positions[-viterbi_lookback:]
+                recent_headings = recent_headings[-viterbi_lookback:]
+                m = viterbi_lite_match(
+                    matcher, recent_positions, recent_headings,
+                    k=viterbi_k, lookback=viterbi_lookback,
+                    w_dist=viterbi_w_dist,
+                    w_bearing_deg=viterbi_w_bearing_deg,
+                    w_switch_penalty=viterbi_w_switch_penalty,
+                    previous_segment_id=last_segment_id,
+                )
+            else:
+                m = matcher.nearest_segment(pos[0], pos[1], heading_estimate=heading)
             if m is not None:
-                pos[0], pos[1], heading, _ = m
+                if use_viterbi_lite:
+                    _, pos[0], pos[1], heading, _ = m
+                    last_segment_id = m[4]
+                else:
+                    pos[0], pos[1], heading, _ = m
                 matched += 1
         if heading_true is None:
-            heading += np.sum(gyro_rate[i, :stride_samples]) * dt
-    return pos, matched / max(1, n_windows)
+            speed_is_low = (v0_true is not None and
+                            float(v0_true[i]) < low_speed_thresh)
+            is_trip_start_artifact = (
+                start == 0 and
+                (i - start) < bootstrap_window_count and
+                speed_is_low
+            )
+            if not is_trip_start_artifact:
+                heading += np.sum(gyro_rate[i, :stride_samples]) * dt
+        if return_trace:
+            trace.append([pos.copy(), heading])
+    result = (pos, matched / max(1, n_windows))
+    if return_trace:
+        result += (np.array([x[0] for x in trace]),
+                   np.array([x[1] for x in trace]))
+    return result
 
 
 def integrate_trajectory_with_map_matching(pred_local, gyro_yaw, heading_start_true,
