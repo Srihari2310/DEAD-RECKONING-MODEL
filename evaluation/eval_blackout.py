@@ -26,7 +26,7 @@ WEIGHT_SETS = {
     "full-fit mix":     -np.array([0.568, 0.831, 1.123]),
     "first-10% mix":    -np.array([0.271, 0.965, 1.374]),
 }
-DURATIONS_S = [30]     # 1 window = 1 s
+DURATIONS_S = [30, 60]     # 1 window = 1 s
 START_STEP = 30                      # candidate start every 30 windows
 MIN_SPEED_KMH = 20.0
 RESET_S = (10, 15, 20, 30)           # seconds; windows advance 1s each

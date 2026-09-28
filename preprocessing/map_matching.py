@@ -326,6 +326,11 @@ def dead_reckon_blackout(pred_local, gyro_rate, start_pos, start_heading,
     recent_positions = []
     recent_headings = []
     last_segment_id = None
+    heading_offset = 0.0
+    OFFSET_K = 0.3
+    OFFSET_MAX_ERR = 15.0
+    OFFSET_MAX_DIST = 10.0
+    OFFSET_MAX_YAW = 0.05
     turn_hist = []
     uturn_cooldown = 0
     if matcher is not None:
@@ -353,8 +358,10 @@ def dead_reckon_blackout(pred_local, gyro_rate, start_pos, start_heading,
             dxl, dyl = np.asarray(disp, dtype=float) * disp_scale
         else:
             dxl, dyl = pred_local[i] * disp_scale
-        pos[0] += dxl * np.cos(heading) + dyl * np.sin(heading)
-        pos[1] += -dxl * np.sin(heading) + dyl * np.cos(heading)
+        r = gyro_rate[i, :stride_samples].copy()
+        rotation_heading = heading + heading_offset
+        pos[0] += dxl * np.cos(rotation_heading) + dyl * np.sin(rotation_heading)
+        pos[1] += -dxl * np.sin(rotation_heading) + dyl * np.cos(rotation_heading)
 
         if matcher is not None:
             if use_viterbi_lite:
@@ -379,9 +386,15 @@ def dead_reckon_blackout(pred_local, gyro_rate, start_pos, start_heading,
                         heading = matched_heading
                     last_segment_id = m[4]
                 else:
-                    pos[0], pos[1], matched_heading, _ = m
+                    _px, _py, matched_heading, match_dist = m
                     if uturn_cooldown == 0:
-                        heading = matched_heading
+                        err = ((np.degrees(matched_heading) -
+                                np.degrees(heading + heading_offset) + 180.0) %
+                               360.0 - 180.0)
+                        straight = abs(np.mean(r)) < OFFSET_MAX_YAW
+                        if (match_dist < OFFSET_MAX_DIST and
+                                abs(err) < OFFSET_MAX_ERR and straight):
+                            heading_offset += OFFSET_K * np.radians(err)
                 matched += 1
         if heading_true is None:
             if use_accel_yaw_fusion:
@@ -413,7 +426,6 @@ def dead_reckon_blackout(pred_local, gyro_rate, start_pos, start_heading,
                     yaw_rate = gyro_yaw_rate
                 heading += yaw_rate * stride_samples * dt
             else:
-                r = gyro_rate[i, :stride_samples].copy()
                 if (v0_true is not None and
                         float(v0_true[i]) < low_speed_thresh):
                     r[np.abs(r) < yaw_deadband] = 0.0
