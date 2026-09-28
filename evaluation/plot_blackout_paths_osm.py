@@ -71,7 +71,8 @@ def settled_index(v, heading_start, min_speed=3.0, run=5, max_change=5.0):
 
 def integrate_path(pred_local, gyro_rate, heading_start, matcher=None,
                    use_true_heading=False, v0_true=None,
-                   low_speed_thresh=3.0, bootstrap_window_count=24):
+                   low_speed_thresh=3.0, bootstrap_window_count=24,
+                   road_lock=False):
     """Integrate one full path through dead_reckon_blackout."""
     first_fast = settled_index(v0_true, heading_start)
     kwargs = dict(
@@ -81,6 +82,7 @@ def integrate_path(pred_local, gyro_rate, heading_start, matcher=None,
         v0_true=v0_true,
         low_speed_thresh=low_speed_thresh,
         bootstrap_window_count=bootstrap_window_count,
+        road_lock=road_lock,
         return_trace=True,
     )
     if use_true_heading:
@@ -195,7 +197,8 @@ def main():
     )
     gyro_map_path, gyro_map_fraction = integrate_path(
         predict_window, gyro_rate, heading_start, matcher=matcher_gyro,
-        v0_true=v_start, low_speed_thresh=3.0, bootstrap_window_count=24
+        v0_true=v_start, low_speed_thresh=3.0, bootstrap_window_count=24,
+        road_lock=True
     )
 
     # Use raw aligned GPS for the truth line. Summing overlapping window labels

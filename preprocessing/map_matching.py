@@ -271,7 +271,9 @@ def dead_reckon_blackout(pred_local, gyro_rate, start_pos, start_heading,
                          accel_lateral=None, use_accel_yaw_fusion=False,
                          accel_min_speed=2.0, accel_max_yaw_rate=1.5,
                          accel_turn_scale=0.3, accel_max_weight=0.5,
-                         accel_yaw_scale=1.0):
+                         accel_yaw_scale=1.0,
+                         road_lock=False, lock_max_turn_deg=50.0,
+                         lock_fallback_m=100.0):
     """
     Simulate a GPS blackout over windows [start, start+n_windows).
     Starts from a KNOWN position/heading (what the app has from GPS just
@@ -378,15 +380,38 @@ def dead_reckon_blackout(pred_local, gyro_rate, start_pos, start_heading,
                     previous_segment_id=last_segment_id,
                 )
             else:
-                m = matcher.nearest_segment(pos[0], pos[1], heading_estimate=heading)
+                if road_lock:
+                    m_l = matcher.nearest_segment(
+                        pos[0], pos[1], heading_estimate=heading,
+                        snap_gate_m=lock_fallback_m, max_angle_deg=60.0
+                    )
+                    if m_l is None:
+                        m_l = matcher.nearest_segment(
+                            pos[0], pos[1], heading_estimate=None,
+                            snap_gate_m=lock_fallback_m
+                        )
+                    if m_l is not None:
+                        # Correct position from the road match, but keep the
+                        # gyro heading.  The next window must continue from
+                        # this corrected point while gyro remains responsible
+                        # for heading/turn evolution.
+                        pos[0], pos[1] = m_l[0], m_l[1]
+                        matched += 1
+                m = None if road_lock else matcher.nearest_segment(
+                    pos[0], pos[1], heading_estimate=heading
+                )
             if m is not None:
                 if use_viterbi_lite:
                     _, pos[0], pos[1], matched_heading, _ = m
-                    if uturn_cooldown == 0:
-                        heading = matched_heading
+                    # Viterbi selects the road point; gyro still owns
+                    # heading so turns continue to be integrated normally.
                     last_segment_id = m[4]
                 else:
                     _px, _py, matched_heading, match_dist = m
+                    # Re-anchor the trajectory at the matched road point.
+                    # Do not overwrite heading: gyro integration resumes
+                    # from this corrected position on the next window.
+                    pos[0], pos[1] = _px, _py
                     if uturn_cooldown == 0:
                         err = ((np.degrees(matched_heading) -
                                 np.degrees(heading + heading_offset) + 180.0) %

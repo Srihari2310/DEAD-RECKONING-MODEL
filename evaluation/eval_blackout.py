@@ -152,11 +152,14 @@ def main(trip="Vta1a"):
         rate = X[:, :, 3:6] @ W
         print(f"\n=== Heading source: {wname}  W={W} ===")
         print(f"{'Blackout':>9} {'#runs':>6} | {'GT-heading ceiling':>19} | "
-              f"{'GT + chained v0':>16} | {'gyro only':>10} | {'gyro+map':>9} | "
-              f"{'map<10%':>8} {'gyro<10%':>9} | matched")
+              f"{'GT + chained v0':>16} | {'gyro only':>10} | "
+              f"{'gyro+map':>9} {'gyro+lock':>10} | "
+              f"{'map<10%':>8} {'lock<10%':>9} {'gyro<10%':>9} | matched map/lock")
         for dur in DURATIONS_S:
-            res = {"gt": [], "gt_heading_chained_v0": [], "gyro": [], "mm": []}
+            res = {"gt": [], "gt_heading_chained_v0": [], "gyro": [],
+                   "mm": [], "mm_lock": []}
             frac = []
+            frac_lock = []
             for s in range(1, n - dur, START_STEP):
                 if speed_kmh[s] < MIN_SPEED_KMH:
                     continue
@@ -173,7 +176,11 @@ def main(trip="Vta1a"):
                                     v0_true=v_start)),
                                 ("gyro", dict(v0_true=v_start)),
                                 ("mm", dict(matcher=matcher, v0_true=v_start,
-                                             use_viterbi_lite=False))):
+                                             use_viterbi_lite=False)),
+                                ("mm_lock", dict(matcher=matcher,
+                                                  v0_true=v_start,
+                                                  use_viterbi_lite=False,
+                                                  road_lock=True))):
                     p, mf = dead_reckon_blackout(
                         None, rate, p0, h0, s, dur,
                         predict_fn=predict_window, v0_start=v_start,
@@ -181,16 +188,24 @@ def main(trip="Vta1a"):
                     res[key].append(100 * np.linalg.norm(p - target) / dist)
                     if key == "mm":
                         frac.append(mf)
-            g, gc, y, m = (np.array(res[k]) for k in
-                           ("gt", "gt_heading_chained_v0", "gyro", "mm"))
+                    elif key == "mm_lock":
+                        frac_lock.append(mf)
+            g, gc, y, m, ml = (np.array(res[k]) for k in
+                               ("gt", "gt_heading_chained_v0", "gyro",
+                                "mm", "mm_lock"))
             print(f"{dur:>7}s {len(g):>6} | {np.median(g):>17.1f}% | "
                   f"{np.median(gc):>14.1f}% | {np.median(y):>9.1f}% | "
-                  f"{np.median(m):>8.1f}% | "
-                  f"{100*(m<10).mean():>7.0f}% {100*(y<10).mean():>8.0f}% | "
-                  f"{100*np.mean(frac):.0f}%")
+                  f"{np.median(m):>8.1f}% {np.median(ml):>9.1f}% | "
+                  f"{100*(m<10).mean():>7.0f}% "
+                  f"{100*(ml<10).mean():>8.0f}% "
+                  f"{100*(y<10).mean():>8.0f}% | "
+                  f"{100*np.mean(frac):.0f}%/{100*np.mean(frac_lock):.0f}%")
             print(f"gyro+map MEAN: {np.mean(m):.1f}%  (median: {np.median(m):.1f}%)")
+            print(f"gyro+lock MEAN: {np.mean(ml):.1f}%  (median: {np.median(ml):.1f}%)")
             print(f"runs with matched<20%: {sum(1 for f in frac if f < 0.2)}/{len(frac)}")
             print(f"runs with matched>80%: {sum(1 for f in frac if f > 0.8)}/{len(frac)}")
+            print(f"lock runs matched<20%: {sum(1 for f in frac_lock if f < 0.2)}/{len(frac_lock)}")
+            print(f"lock runs matched>80%: {sum(1 for f in frac_lock if f > 0.8)}/{len(frac_lock)}")
 
         # Speed re-anchoring controls, evaluated with both GT and gyro
         # heading. Keep this diagnostic on the primary heading-rate mix to
