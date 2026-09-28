@@ -23,6 +23,19 @@ import pyproj
 from pathlib import Path
 from scipy.spatial import cKDTree
 
+MAIN_HIGHWAYS = {
+    "motorway", "motorway_link", "trunk", "trunk_link",
+    "primary", "primary_link", "secondary", "secondary_link",
+    "tertiary", "tertiary_link",
+}
+
+
+def is_main_road(hw):
+    if isinstance(hw, (list, tuple, set)):
+        return any(h in MAIN_HIGHWAYS for h in hw)
+    return hw in MAIN_HIGHWAYS
+
+
 CACHE_DIR = Path("preprocessing/output/osm_cache")
 GRAPH_PATH = CACHE_DIR / "vta1a_roads.graphml"
 ORIGIN_PATH = CACHE_DIR / "vta1a_origin.json"
@@ -71,6 +84,8 @@ class RoadMatcher:
         segs, pts, pt_seg = [], [], []
 
         for u, v, data in G_proj.edges(data=True):
+            if not is_main_road(data.get("highway")):
+                continue
             geom = data.get("geometry")
             if geom is not None:
                 coords = [(x - oe, y - on) for x, y in geom.coords]
@@ -247,7 +262,8 @@ def dead_reckon_blackout(pred_local, gyro_rate, start_pos, start_heading,
                          v0_noise_std=0.0, rng=None, use_zupt=False,
                          acc_feature=None, gyr_feature=None,
                          acc_threshold=None, gyr_threshold=None,
-                         low_speed_thresh=3.0, bootstrap_window_count=24,
+                         low_speed_thresh=3.0, yaw_deadband=0.15,
+                         bootstrap_window_count=24,
                          return_trace=False, use_viterbi_lite=False,
                          viterbi_k=3, viterbi_lookback=3,
                          viterbi_w_dist=1.0, viterbi_w_bearing_deg=1.0,
@@ -310,10 +326,14 @@ def dead_reckon_blackout(pred_local, gyro_rate, start_pos, start_heading,
     recent_positions = []
     recent_headings = []
     last_segment_id = None
+    turn_hist = []
+    uturn_cooldown = 0
     if matcher is not None:
         matcher.last_seg = None
         matcher.recent_bearings = []
     for i in range(start, start + n_windows):
+        if uturn_cooldown > 0:
+            uturn_cooldown -= 1
         if heading_true is not None:
             heading = float(heading_true[i])
         if predict_fn is not None:
@@ -354,45 +374,55 @@ def dead_reckon_blackout(pred_local, gyro_rate, start_pos, start_heading,
                 m = matcher.nearest_segment(pos[0], pos[1], heading_estimate=heading)
             if m is not None:
                 if use_viterbi_lite:
-                    _, pos[0], pos[1], heading, _ = m
+                    _, pos[0], pos[1], matched_heading, _ = m
+                    if uturn_cooldown == 0:
+                        heading = matched_heading
                     last_segment_id = m[4]
                 else:
-                    pos[0], pos[1], heading, _ = m
+                    pos[0], pos[1], matched_heading, _ = m
+                    if uturn_cooldown == 0:
+                        heading = matched_heading
                 matched += 1
         if heading_true is None:
-            speed_is_low = (v0_true is not None and
-                            float(v0_true[i]) < low_speed_thresh)
-            is_trip_start_artifact = False
-            if not is_trip_start_artifact:
-                if use_accel_yaw_fusion:
-                    gyro_yaw_rate = np.mean(gyro_rate[i, :stride_samples])
-                    accel_lat_mean = np.mean(accel_lateral[i, :stride_samples])
-                    accel_yaw_rate = yaw_rate_from_accel(
-                        accel_lat_mean, float(v0_true[i]) if v0_true is not None else 0.0,
-                        min_speed=accel_min_speed,
-                        max_yaw_rate=accel_max_yaw_rate,
+            if use_accel_yaw_fusion:
+                gyro_yaw_rate = np.mean(gyro_rate[i, :stride_samples])
+                accel_lat_mean = np.mean(accel_lateral[i, :stride_samples])
+                accel_yaw_rate = yaw_rate_from_accel(
+                    accel_lat_mean,
+                    float(v0_true[i]) if v0_true is not None else 0.0,
+                    min_speed=accel_min_speed,
+                    max_yaw_rate=accel_max_yaw_rate,
+                )
+                if accel_yaw_rate is not None:
+                    accel_yaw_rate *= accel_yaw_scale
+                    accel_yaw_rate = float(np.clip(
+                        accel_yaw_rate, -accel_max_yaw_rate,
+                        accel_max_yaw_rate
+                    ))
+                    is_sharp_turn = (
+                        abs(gyro_yaw_rate) > SHARP_TURN_GYRO_THRESH and
+                        abs(accel_lat_mean) > SHARP_TURN_ACCEL_THRESH
                     )
-                    if accel_yaw_rate is not None:
-                        accel_yaw_rate *= accel_yaw_scale
-                        accel_yaw_rate = float(np.clip(
-                            accel_yaw_rate, -accel_max_yaw_rate,
-                            accel_max_yaw_rate
-                        ))
-                        is_sharp_turn = (
-                            abs(gyro_yaw_rate) > SHARP_TURN_GYRO_THRESH and
-                            abs(accel_lat_mean) > SHARP_TURN_ACCEL_THRESH
-                        )
-                        if is_sharp_turn:
-                            w_accel = 0.3
-                            yaw_rate = ((1.0 - w_accel) * gyro_yaw_rate +
-                                        w_accel * accel_yaw_rate)
-                        else:
-                            yaw_rate = gyro_yaw_rate
+                    if is_sharp_turn:
+                        w_accel = 0.3
+                        yaw_rate = ((1.0 - w_accel) * gyro_yaw_rate +
+                                    w_accel * accel_yaw_rate)
                     else:
                         yaw_rate = gyro_yaw_rate
-                    heading += yaw_rate * stride_samples * dt
                 else:
-                    heading += np.sum(gyro_rate[i, :stride_samples]) * dt
+                    yaw_rate = gyro_yaw_rate
+                heading += yaw_rate * stride_samples * dt
+            else:
+                r = gyro_rate[i, :stride_samples].copy()
+                if (v0_true is not None and
+                        float(v0_true[i]) < low_speed_thresh):
+                    r[np.abs(r) < yaw_deadband] = 0.0
+                heading += np.sum(r) * dt
+            turn_hist.append(heading)
+            uturn = (len(turn_hist) > 10 and
+                     abs(turn_hist[-1] - turn_hist[-11]) > np.radians(150))
+            if uturn:
+                uturn_cooldown = 5
         if return_trace:
             trace.append([pos.copy(), heading])
     result = (pos, matched / max(1, n_windows))
