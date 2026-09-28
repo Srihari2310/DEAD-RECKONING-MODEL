@@ -40,6 +40,20 @@ def circular_mean(angles):
                             np.mean(np.cos(angles))))
 
 
+def yaw_rate_from_accel(accel_lateral, speed, min_speed=2.0,
+                        max_yaw_rate=1.5):
+    """Estimate yaw rate from lateral acceleration and speed, when reliable."""
+    if speed < min_speed:
+        return None
+    return float(np.clip(accel_lateral / speed,
+                         -max_yaw_rate, max_yaw_rate))
+
+
+# Chosen from the Vta1a 95th-percentile signal distribution.
+SHARP_TURN_GYRO_THRESH = 0.14
+SHARP_TURN_ACCEL_THRESH = 0.93
+
+
 class RoadMatcher:
     def __init__(self, graph_path=GRAPH_PATH, origin_path=ORIGIN_PATH,
                  snap_gate_m=20.0):
@@ -91,48 +105,50 @@ class RoadMatcher:
         self.tree = cKDTree(np.array(pts))
         print(f"RoadMatcher: {len(self.segments)} segments, {len(pts)} sample points")
 
+    HEADING_W = 0.4        # metres of penalty per degree of disagreement
+    AMBIG_MARGIN = 6.0     # score gap below which two branches count as a tie
+    AMBIG_ANGLE_DEG = 15.0 # branches closer than this are the same road
+
     def nearest_segment(self, x, y, k=40, heading_estimate=None,
                         snap_gate_m=None, max_angle_deg=60.0):
-        if snap_gate_m is None:
-            snap_gate_m = self.snap_gate_m
+        gate = self.snap_gate_m if snap_gate_m is None else snap_gate_m
         _, pidx = self.tree.query([x, y], k=k)
         seg_ids = np.unique(self.pt_seg[np.atleast_1d(pidx)])
 
-        best_dist, best = np.inf, None
+        cands = []
         for sid in seg_ids:
             x1, y1, x2, y2 = self.segments[sid]
             dist, px, py = self._point_segment_distance(x, y, x1, y1, x2, y2)
-            if dist > snap_gate_m:
+            if dist > gate:
                 continue
             bearing = np.arctan2(x2 - x1, y2 - y1)
+            ang_deg = 0.0
             if heading_estimate is not None:
                 d = (bearing - heading_estimate + np.pi) % (2 * np.pi) - np.pi
-                if abs(d) > np.pi / 2:          # OSM edge may be stored reversed
+                if abs(d) > np.pi / 2:
                     bearing = (bearing + np.pi) % (2 * np.pi) - np.pi
                 d = (bearing - heading_estimate + np.pi) % (2 * np.pi) - np.pi
                 if abs(d) > np.radians(max_angle_deg):
                     continue
-            # trend-consistency penalty (uses recent matched bearings, not just adjacency)
-            trend_penalty = 0.0
-            if self.recent_bearings:
-                avg_bearing = np.angle(np.mean(np.exp(1j * np.array(self.recent_bearings))))
-                d = (bearing - avg_bearing + np.pi) % (2*np.pi) - np.pi
-                trend_penalty = (abs(d) / np.pi) * 40.0  # scales 0-40m penalty
+                ang_deg = abs(np.degrees(d))
+            cands.append((dist + self.HEADING_W * ang_deg,
+                          dist, px, py, bearing))
 
-            adj_penalty = 0.0
-            if self.last_seg is not None and sid != self.last_seg and sid not in self.adjacent[self.last_seg]:
-                adj_penalty = 15.0
-
-            score = dist + trend_penalty + adj_penalty
-            if score < best_dist:
-                best_dist, best = score, (px, py, bearing, sid)
-        if best is None:
+        if not cands:
             return None
-        self.last_seg = best[3]
-        self.recent_bearings.append(best[2])
-        if len(self.recent_bearings) > 3:
-            self.recent_bearings.pop(0)
-        return best[0], best[1], best[2], best_dist
+        cands.sort(key=lambda c: c[0])
+        best = cands[0]
+        bearing_out = best[4]
+
+        if heading_estimate is not None:
+            for c in cands[1:]:
+                if c[0] - best[0] >= self.AMBIG_MARGIN:
+                    break
+                dd = abs((c[4] - best[4] + np.pi) % (2 * np.pi) - np.pi)
+                if dd > np.radians(self.AMBIG_ANGLE_DEG):
+                    bearing_out = heading_estimate
+                    break
+        return best[2], best[3], bearing_out, best[1]
 
     def top_k_segments(self, x, y, k=3, heading_estimate=None,
                        snap_gate_m=None):
@@ -147,6 +163,7 @@ class RoadMatcher:
             if dist > gate:
                 continue
             bearing = np.arctan2(x2 - x1, y2 - y1)
+            ang_deg = 0.0
             if heading_estimate is not None:
                 d = (bearing - heading_estimate + np.pi) % (2 * np.pi) - np.pi
                 if abs(d) > np.pi / 2:
@@ -154,9 +171,11 @@ class RoadMatcher:
                 d = (bearing - heading_estimate + np.pi) % (2 * np.pi) - np.pi
                 if abs(d) > np.radians(60.0):
                     continue
-            candidates.append((dist, px, py, bearing, sid))
+                ang_deg = abs(np.degrees(d))
+            candidates.append((dist + self.HEADING_W * ang_deg,
+                               dist, px, py, bearing, sid))
         candidates.sort(key=lambda c: c[0])
-        return candidates[:k]
+        return [(c[1], c[2], c[3], c[4], c[5]) for c in candidates[:k]]
 
     @staticmethod
     def _point_segment_distance(px, py, x1, y1, x2, y2):
@@ -232,7 +251,11 @@ def dead_reckon_blackout(pred_local, gyro_rate, start_pos, start_heading,
                          return_trace=False, use_viterbi_lite=False,
                          viterbi_k=3, viterbi_lookback=3,
                          viterbi_w_dist=1.0, viterbi_w_bearing_deg=1.0,
-                         viterbi_w_switch_penalty=15.0):
+                         viterbi_w_switch_penalty=15.0,
+                         accel_lateral=None, use_accel_yaw_fusion=False,
+                         accel_min_speed=2.0, accel_max_yaw_rate=1.5,
+                         accel_turn_scale=0.3, accel_max_weight=0.5,
+                         accel_yaw_scale=1.0):
     """
     Simulate a GPS blackout over windows [start, start+n_windows).
     Starts from a KNOWN position/heading (what the app has from GPS just
@@ -255,6 +278,8 @@ def dead_reckon_blackout(pred_local, gyro_rate, start_pos, start_heading,
                                 trip-start low-speed artifact exception
       use_viterbi_lite -> use the optional rolling top-k map candidate scorer
                           when matcher is provided
+      accel_lateral -> lateral acceleration samples aligned with gyro_rate
+      use_accel_yaw_fusion -> blend accel-derived yaw during stronger turns
     Returns (final_xy, matched_fraction), or additionally the per-window
     position/heading trace when return_trace=True.
     """
@@ -268,6 +293,8 @@ def dead_reckon_blackout(pred_local, gyro_rate, start_pos, start_heading,
         raise ValueError("low_speed_thresh must be non-negative")
     if bootstrap_window_count < 0:
         raise ValueError("bootstrap_window_count must be non-negative")
+    if use_accel_yaw_fusion and accel_lateral is None:
+        raise ValueError("accel_lateral is required for accel yaw fusion")
     if not 0.0 <= v0_ema_alpha <= 1.0:
         raise ValueError("v0_ema_alpha must be between 0 and 1")
     if use_zupt:
@@ -335,13 +362,37 @@ def dead_reckon_blackout(pred_local, gyro_rate, start_pos, start_heading,
         if heading_true is None:
             speed_is_low = (v0_true is not None and
                             float(v0_true[i]) < low_speed_thresh)
-            is_trip_start_artifact = (
-                start == 0 and
-                (i - start) < bootstrap_window_count and
-                speed_is_low
-            )
+            is_trip_start_artifact = False
             if not is_trip_start_artifact:
-                heading += np.sum(gyro_rate[i, :stride_samples]) * dt
+                if use_accel_yaw_fusion:
+                    gyro_yaw_rate = np.mean(gyro_rate[i, :stride_samples])
+                    accel_lat_mean = np.mean(accel_lateral[i, :stride_samples])
+                    accel_yaw_rate = yaw_rate_from_accel(
+                        accel_lat_mean, float(v0_true[i]) if v0_true is not None else 0.0,
+                        min_speed=accel_min_speed,
+                        max_yaw_rate=accel_max_yaw_rate,
+                    )
+                    if accel_yaw_rate is not None:
+                        accel_yaw_rate *= accel_yaw_scale
+                        accel_yaw_rate = float(np.clip(
+                            accel_yaw_rate, -accel_max_yaw_rate,
+                            accel_max_yaw_rate
+                        ))
+                        is_sharp_turn = (
+                            abs(gyro_yaw_rate) > SHARP_TURN_GYRO_THRESH and
+                            abs(accel_lat_mean) > SHARP_TURN_ACCEL_THRESH
+                        )
+                        if is_sharp_turn:
+                            w_accel = 0.3
+                            yaw_rate = ((1.0 - w_accel) * gyro_yaw_rate +
+                                        w_accel * accel_yaw_rate)
+                        else:
+                            yaw_rate = gyro_yaw_rate
+                    else:
+                        yaw_rate = gyro_yaw_rate
+                    heading += yaw_rate * stride_samples * dt
+                else:
+                    heading += np.sum(gyro_rate[i, :stride_samples]) * dt
         if return_trace:
             trace.append([pos.copy(), heading])
     result = (pos, matched / max(1, n_windows))

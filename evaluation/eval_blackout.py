@@ -26,7 +26,7 @@ WEIGHT_SETS = {
     "full-fit mix":     -np.array([0.568, 0.831, 1.123]),
     "first-10% mix":    -np.array([0.271, 0.965, 1.374]),
 }
-DURATIONS_S = [30, 60, 120]     # 1 window = 1 s
+DURATIONS_S = [30]     # 1 window = 1 s
 START_STEP = 30                      # candidate start every 30 windows
 MIN_SPEED_KMH = 20.0
 RESET_S = (10, 15, 20, 30)           # seconds; windows advance 1s each
@@ -85,6 +85,19 @@ def prepare_test_split(trip):
              v_end=w["v_end"])
     print(f"Created test split: {split_path}")
     return split_path
+
+
+def reliable_heading(heading_start, v_start, s, min_speed=3.0,
+                     lookback=60, max_change=5.0):
+    """Use a recent heading recorded while moving steadily."""
+    def wrap(a):
+        return (a + 180) % 360 - 180
+
+    for j in range(s, max(2, s - lookback), -1):
+        if (v_start[j] >= min_speed and
+                abs(wrap(heading_start[j] - heading_start[j - 2])) < max_change):
+            return heading_start[j]
+    return heading_start[s]
 
 
 def main(trip="Vta1a"):
@@ -148,7 +161,7 @@ def main(trip="Vta1a"):
                 if speed_kmh[s] < MIN_SPEED_KMH:
                     continue
                 p0 = true_traj[s - 1]
-                h0 = heading_start[s]
+                h0 = reliable_heading(heading_start, v_start, s)
                 dist = np.linalg.norm(true_disp[s:s + dur], axis=1).sum()
                 if dist < 50:
                     continue
@@ -160,7 +173,7 @@ def main(trip="Vta1a"):
                                     v0_true=v_start)),
                                 ("gyro", dict(v0_true=v_start)),
                                 ("mm", dict(matcher=matcher, v0_true=v_start,
-                                             use_viterbi_lite=True))):
+                                             use_viterbi_lite=False))):
                     p, mf = dead_reckon_blackout(
                         None, rate, p0, h0, s, dur,
                         predict_fn=predict_window, v0_start=v_start,
@@ -204,7 +217,7 @@ def main(trip="Vta1a"):
                                               gyr_threshold=GYR_T)
                                          if use_zupt
                                          else {})
-                        h0 = heading_start[s]
+                        h0 = reliable_heading(heading_start, v_start, s)
                         p, _ = dead_reckon_blackout(
                             None, rate, p0, h0, s, dur,
                             heading_true=heading_start if heading_mode == "gt" else None,

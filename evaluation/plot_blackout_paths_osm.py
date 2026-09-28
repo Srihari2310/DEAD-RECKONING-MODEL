@@ -55,10 +55,25 @@ def make_predict_window(X, device):
     return predict_window
 
 
+def settled_index(v, heading_start, min_speed=3.0, run=5, max_change=5.0):
+    """First window preceded by sustained speed and a steady heading."""
+    heading_deg = (np.degrees(heading_start)
+                   if np.abs(heading_start).max() <= 7
+                   else heading_start.astype(float))
+    wrap = lambda a: (a + 180) % 360 - 180
+    for i in range(run, len(v)):
+        seg_v = v[i - run:i + 1]
+        seg_h = np.abs(wrap(np.diff(heading_deg[i - run:i + 1])))
+        if (seg_v >= min_speed).all() and (seg_h < max_change).all():
+            return i
+    return 0
+
+
 def integrate_path(pred_local, gyro_rate, heading_start, matcher=None,
                    use_true_heading=False, v0_true=None,
                    low_speed_thresh=3.0, bootstrap_window_count=24):
     """Integrate one full path through dead_reckon_blackout."""
+    first_fast = settled_index(v0_true, heading_start)
     kwargs = dict(
         matcher=matcher,
         predict_fn=pred_local,
@@ -71,8 +86,8 @@ def integrate_path(pred_local, gyro_rate, heading_start, matcher=None,
     if use_true_heading:
         kwargs["heading_true"] = heading_start
     _, matched, path, _ = dead_reckon_blackout(
-        None, gyro_rate, np.zeros(2), heading_start[0], 0,
-        len(gyro_rate), **kwargs
+        None, gyro_rate, np.zeros(2), heading_start[first_fast], first_fast,
+        len(heading_start) - first_fast, **kwargs
     )
     return path, matched
 
