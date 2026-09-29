@@ -27,7 +27,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import common  # noqa: E402
 
-WINDOW_SAMPLES = 40   # 4.0s at 10Hz
+WINDOW_SAMPLES = 10   # 1.0s at 10Hz
 STRIDE_SAMPLES = 10   # 1.0s at 10Hz
 CHANNELS = [
     "accel_forward", "accel_lateral", "accel_vertical",

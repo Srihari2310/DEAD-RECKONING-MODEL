@@ -772,5 +772,813 @@
         "note": ""
       }
     ]
+  },
+  {
+    "timestamp": "2026-09-28T21:16:56.280231",
+    "results": [
+      {
+        "trip": "Vw1",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "ValueError: [Vw1] Only 0 qualifying samples for yaw alignment (need >=50). Consider loosening thresholds."
+      },
+      {
+        "trip": "Vw10",
+        "status": "OK",
+        "corr": 0.846,
+        "lag_rows": 4,
+        "yaw_offset": -132.54,
+        "x_shape": "(61, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw12",
+        "status": "UNTRUSTED",
+        "corr": 0.095,
+        "lag_rows": -149,
+        "yaw_offset": -19.98,
+        "x_shape": "(73, 40, 6)",
+        "note": "Weak correlation (0.095) \u2014 same red flag as Y1, do not add to training blindly"
+      },
+      {
+        "trip": "Vw13",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "ValueError: Trip too short (284 rows) for reliable lag detection (minimum 300)"
+      },
+      {
+        "trip": "Vw14a",
+        "status": "OK",
+        "corr": 0.651,
+        "lag_rows": 37,
+        "yaw_offset": -29.33,
+        "x_shape": "(307, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw14b",
+        "status": "OK",
+        "corr": 0.99,
+        "lag_rows": 38,
+        "yaw_offset": -19.77,
+        "x_shape": "(1952, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw14c",
+        "status": "OK",
+        "corr": 0.992,
+        "lag_rows": 16,
+        "yaw_offset": -144.98,
+        "x_shape": "(1578, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw15",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "ValueError: [Vw15] Only 0 qualifying samples for yaw alignment (need >=50). Consider loosening thresholds."
+      },
+      {
+        "trip": "Vw16a",
+        "status": "OK",
+        "corr": 0.967,
+        "lag_rows": -99,
+        "yaw_offset": 175.08,
+        "x_shape": "(575, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw16b",
+        "status": "OK",
+        "corr": 0.807,
+        "lag_rows": 45,
+        "yaw_offset": 90.87,
+        "x_shape": "(105, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw17",
+        "status": "OK",
+        "corr": 0.751,
+        "lag_rows": 60,
+        "yaw_offset": -165.09,
+        "x_shape": "(23, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw2",
+        "status": "OK",
+        "corr": 0.989,
+        "lag_rows": 22,
+        "yaw_offset": 163.59,
+        "x_shape": "(5266, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw3",
+        "status": "OK",
+        "corr": 0.967,
+        "lag_rows": 0,
+        "yaw_offset": 120.83,
+        "x_shape": "(383, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw4",
+        "status": "OK",
+        "corr": 0.994,
+        "lag_rows": 3,
+        "yaw_offset": 152.69,
+        "x_shape": "(12649, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw5",
+        "status": "OK",
+        "corr": 0.897,
+        "lag_rows": 22,
+        "yaw_offset": 147.37,
+        "x_shape": "(96, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw6",
+        "status": "OK",
+        "corr": 0.978,
+        "lag_rows": -7,
+        "yaw_offset": -97.16,
+        "x_shape": "(124, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw7",
+        "status": "OK",
+        "corr": 0.896,
+        "lag_rows": -109,
+        "yaw_offset": 167.59,
+        "x_shape": "(146, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw8",
+        "status": "OK",
+        "corr": 0.863,
+        "lag_rows": 43,
+        "yaw_offset": -145.59,
+        "x_shape": "(145, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw9",
+        "status": "OK",
+        "corr": 0.83,
+        "lag_rows": 8,
+        "yaw_offset": 134.67,
+        "x_shape": "(51, 40, 6)",
+        "note": ""
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-28T21:17:30.555909",
+    "results": [
+      {
+        "trip": "Vtb2",
+        "status": "OK",
+        "corr": 0.949,
+        "lag_rows": 5,
+        "yaw_offset": -102.3,
+        "x_shape": "(567, 40, 6)",
+        "note": ""
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-28T21:44:36.051588",
+    "results": [
+      {
+        "trip": "M",
+        "status": "OK",
+        "corr": 0.962,
+        "lag_rows": 17,
+        "yaw_offset": 166.98,
+        "x_shape": "(10592, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vfa01",
+        "status": "OK",
+        "corr": 0.979,
+        "lag_rows": 47,
+        "yaw_offset": 89.26,
+        "x_shape": "(1140, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vta1a",
+        "status": "OK",
+        "corr": 0.998,
+        "lag_rows": -140,
+        "yaw_offset": -173.86,
+        "x_shape": "(2550, 40, 6)",
+        "note": ""
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-28T21:53:30.527685",
+    "results": [
+      {
+        "trip": "M",
+        "status": "OK",
+        "corr": 0.962,
+        "lag_rows": 17,
+        "yaw_offset": 166.98,
+        "x_shape": "(10592, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "S1",
+        "status": "OK",
+        "corr": 0.954,
+        "lag_rows": -1,
+        "yaw_offset": 177.68,
+        "x_shape": "(5171, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "S2",
+        "status": "OK",
+        "corr": 0.971,
+        "lag_rows": 82,
+        "yaw_offset": 175.61,
+        "x_shape": "(9376, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "S3a",
+        "status": "OK",
+        "corr": 0.95,
+        "lag_rows": -66,
+        "yaw_offset": 173.63,
+        "x_shape": "(2452, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "S3b",
+        "status": "OK",
+        "corr": 0.889,
+        "lag_rows": 27,
+        "yaw_offset": -171.38,
+        "x_shape": "(675, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "S3c",
+        "status": "OK",
+        "corr": 0.925,
+        "lag_rows": 5,
+        "yaw_offset": -179.69,
+        "x_shape": "(3714, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vfa01",
+        "status": "OK",
+        "corr": 0.979,
+        "lag_rows": 47,
+        "yaw_offset": 89.26,
+        "x_shape": "(1140, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vta1a",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "OSError: [Errno 22] Invalid argument: 'preprocessing\\\\output\\\\02_calibrated\\\\S-Vta1a_calibrated.csv'"
+      },
+      {
+        "trip": "Vta2",
+        "status": "OK",
+        "corr": 0.992,
+        "lag_rows": -2,
+        "yaw_offset": -114.24,
+        "x_shape": "(1095, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vtb1",
+        "status": "OK",
+        "corr": 0.951,
+        "lag_rows": 9,
+        "yaw_offset": -156.36,
+        "x_shape": "(3242, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vtb12",
+        "status": "OK",
+        "corr": 0.865,
+        "lag_rows": 0,
+        "yaw_offset": 175.12,
+        "x_shape": "(41, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vtb2",
+        "status": "OK",
+        "corr": 0.949,
+        "lag_rows": 5,
+        "yaw_offset": -102.3,
+        "x_shape": "(567, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vtb4",
+        "status": "OK",
+        "corr": 0.944,
+        "lag_rows": 8,
+        "yaw_offset": -157.04,
+        "x_shape": "(51, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vtb5",
+        "status": "OK",
+        "corr": 0.976,
+        "lag_rows": -200,
+        "yaw_offset": -34.97,
+        "x_shape": "(6415, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vtb6",
+        "status": "OK",
+        "corr": 0.52,
+        "lag_rows": 0,
+        "yaw_offset": 167.67,
+        "x_shape": "(46, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vtb7",
+        "status": "OK",
+        "corr": 0.938,
+        "lag_rows": 11,
+        "yaw_offset": 5.01,
+        "x_shape": "(42, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vtb9",
+        "status": "OK",
+        "corr": 0.717,
+        "lag_rows": 0,
+        "yaw_offset": 22.38,
+        "x_shape": "(42, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw10",
+        "status": "OK",
+        "corr": 0.846,
+        "lag_rows": 4,
+        "yaw_offset": -132.54,
+        "x_shape": "(61, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw14a",
+        "status": "OK",
+        "corr": 0.651,
+        "lag_rows": 37,
+        "yaw_offset": -29.33,
+        "x_shape": "(307, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw14b",
+        "status": "OK",
+        "corr": 0.99,
+        "lag_rows": 38,
+        "yaw_offset": -19.77,
+        "x_shape": "(1952, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw14c",
+        "status": "OK",
+        "corr": 0.992,
+        "lag_rows": 16,
+        "yaw_offset": -144.98,
+        "x_shape": "(1578, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw16a",
+        "status": "OK",
+        "corr": 0.967,
+        "lag_rows": -99,
+        "yaw_offset": 175.08,
+        "x_shape": "(575, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw16b",
+        "status": "OK",
+        "corr": 0.807,
+        "lag_rows": 45,
+        "yaw_offset": 90.87,
+        "x_shape": "(105, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw17",
+        "status": "OK",
+        "corr": 0.751,
+        "lag_rows": 60,
+        "yaw_offset": -165.09,
+        "x_shape": "(23, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw2",
+        "status": "OK",
+        "corr": 0.989,
+        "lag_rows": 22,
+        "yaw_offset": 163.59,
+        "x_shape": "(5266, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw3",
+        "status": "OK",
+        "corr": 0.967,
+        "lag_rows": 0,
+        "yaw_offset": 120.83,
+        "x_shape": "(383, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw4",
+        "status": "OK",
+        "corr": 0.994,
+        "lag_rows": 3,
+        "yaw_offset": 152.69,
+        "x_shape": "(12649, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw5",
+        "status": "OK",
+        "corr": 0.897,
+        "lag_rows": 22,
+        "yaw_offset": 147.37,
+        "x_shape": "(96, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw6",
+        "status": "OK",
+        "corr": 0.978,
+        "lag_rows": -7,
+        "yaw_offset": -97.16,
+        "x_shape": "(124, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw7",
+        "status": "OK",
+        "corr": 0.896,
+        "lag_rows": -109,
+        "yaw_offset": 167.59,
+        "x_shape": "(146, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw8",
+        "status": "OK",
+        "corr": 0.863,
+        "lag_rows": 43,
+        "yaw_offset": -145.59,
+        "x_shape": "(145, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw9",
+        "status": "OK",
+        "corr": 0.83,
+        "lag_rows": 8,
+        "yaw_offset": 134.67,
+        "x_shape": "(51, 40, 6)",
+        "note": ""
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-09-28T23:01:06.142021",
+    "results": [
+      {
+        "trip": "M",
+        "status": "OK",
+        "corr": 0.962,
+        "lag_rows": 17,
+        "yaw_offset": 166.98,
+        "x_shape": "(10592, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "S1",
+        "status": "OK",
+        "corr": 0.954,
+        "lag_rows": -1,
+        "yaw_offset": 177.68,
+        "x_shape": "(5171, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "S2",
+        "status": "OK",
+        "corr": 0.971,
+        "lag_rows": 82,
+        "yaw_offset": 175.61,
+        "x_shape": "(9376, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "S3a",
+        "status": "OK",
+        "corr": 0.95,
+        "lag_rows": -66,
+        "yaw_offset": 173.63,
+        "x_shape": "(2452, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "S3b",
+        "status": "OK",
+        "corr": 0.889,
+        "lag_rows": 27,
+        "yaw_offset": -171.38,
+        "x_shape": "(675, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "S3c",
+        "status": "OK",
+        "corr": 0.925,
+        "lag_rows": 5,
+        "yaw_offset": -179.69,
+        "x_shape": "(3714, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vfa01",
+        "status": "OK",
+        "corr": 0.979,
+        "lag_rows": 47,
+        "yaw_offset": 89.26,
+        "x_shape": "(1140, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vta1a",
+        "status": "OK",
+        "corr": 0.998,
+        "lag_rows": -140,
+        "yaw_offset": -173.86,
+        "x_shape": "(2550, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vta2",
+        "status": "OK",
+        "corr": 0.992,
+        "lag_rows": -2,
+        "yaw_offset": -114.24,
+        "x_shape": "(1095, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vtb1",
+        "status": "CRASHED",
+        "corr": null,
+        "lag_rows": null,
+        "yaw_offset": null,
+        "x_shape": null,
+        "note": "OSError: [Errno 22] Invalid argument: 'preprocessing\\\\output\\\\01_aligned\\\\S-Vtb1_aligned.csv'"
+      },
+      {
+        "trip": "Vtb12",
+        "status": "OK",
+        "corr": 0.865,
+        "lag_rows": 0,
+        "yaw_offset": 175.12,
+        "x_shape": "(41, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vtb2",
+        "status": "OK",
+        "corr": 0.949,
+        "lag_rows": 5,
+        "yaw_offset": -102.3,
+        "x_shape": "(567, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vtb4",
+        "status": "OK",
+        "corr": 0.944,
+        "lag_rows": 8,
+        "yaw_offset": -157.04,
+        "x_shape": "(51, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vtb5",
+        "status": "OK",
+        "corr": 0.976,
+        "lag_rows": -200,
+        "yaw_offset": -34.97,
+        "x_shape": "(6415, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vtb6",
+        "status": "OK",
+        "corr": 0.52,
+        "lag_rows": 0,
+        "yaw_offset": 167.67,
+        "x_shape": "(46, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vtb7",
+        "status": "OK",
+        "corr": 0.938,
+        "lag_rows": 11,
+        "yaw_offset": 5.01,
+        "x_shape": "(42, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vtb9",
+        "status": "OK",
+        "corr": 0.717,
+        "lag_rows": 0,
+        "yaw_offset": 22.38,
+        "x_shape": "(42, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw10",
+        "status": "OK",
+        "corr": 0.846,
+        "lag_rows": 4,
+        "yaw_offset": -132.54,
+        "x_shape": "(61, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw14a",
+        "status": "OK",
+        "corr": 0.651,
+        "lag_rows": 37,
+        "yaw_offset": -29.33,
+        "x_shape": "(307, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw14b",
+        "status": "OK",
+        "corr": 0.99,
+        "lag_rows": 38,
+        "yaw_offset": -19.77,
+        "x_shape": "(1952, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw14c",
+        "status": "OK",
+        "corr": 0.992,
+        "lag_rows": 16,
+        "yaw_offset": -144.98,
+        "x_shape": "(1578, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw16a",
+        "status": "OK",
+        "corr": 0.967,
+        "lag_rows": -99,
+        "yaw_offset": 175.08,
+        "x_shape": "(575, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw16b",
+        "status": "OK",
+        "corr": 0.807,
+        "lag_rows": 45,
+        "yaw_offset": 90.87,
+        "x_shape": "(105, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw17",
+        "status": "OK",
+        "corr": 0.751,
+        "lag_rows": 60,
+        "yaw_offset": -165.09,
+        "x_shape": "(23, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw2",
+        "status": "OK",
+        "corr": 0.989,
+        "lag_rows": 22,
+        "yaw_offset": 163.59,
+        "x_shape": "(5266, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw3",
+        "status": "OK",
+        "corr": 0.967,
+        "lag_rows": 0,
+        "yaw_offset": 120.83,
+        "x_shape": "(383, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw4",
+        "status": "OK",
+        "corr": 0.994,
+        "lag_rows": 3,
+        "yaw_offset": 152.69,
+        "x_shape": "(12649, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw5",
+        "status": "OK",
+        "corr": 0.897,
+        "lag_rows": 22,
+        "yaw_offset": 147.37,
+        "x_shape": "(96, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw6",
+        "status": "OK",
+        "corr": 0.978,
+        "lag_rows": -7,
+        "yaw_offset": -97.16,
+        "x_shape": "(124, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw7",
+        "status": "OK",
+        "corr": 0.896,
+        "lag_rows": -109,
+        "yaw_offset": 167.59,
+        "x_shape": "(146, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw8",
+        "status": "OK",
+        "corr": 0.863,
+        "lag_rows": 43,
+        "yaw_offset": -145.59,
+        "x_shape": "(145, 40, 6)",
+        "note": ""
+      },
+      {
+        "trip": "Vw9",
+        "status": "OK",
+        "corr": 0.83,
+        "lag_rows": 8,
+        "yaw_offset": 134.67,
+        "x_shape": "(51, 40, 6)",
+        "note": ""
+      }
+    ]
   }
 ]

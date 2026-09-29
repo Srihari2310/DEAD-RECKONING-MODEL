@@ -30,7 +30,7 @@ except ImportError:  # direct execution: python preprocessing/run_pipeline.py ..
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
     from preprocessing import common
 
-WINDOW_SAMPLES = 40   # 4.0s at 10Hz
+WINDOW_SAMPLES = 10   # 1.0s at 10Hz
 STRIDE_SAMPLES = 10   # 1.0s at 10Hz
 CHANNELS = [
     "accel_forward", "accel_lateral", "accel_vertical",

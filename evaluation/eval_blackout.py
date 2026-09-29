@@ -18,8 +18,10 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 from eval_model import rotate_local_to_global
 from preprocessing.map_matching import RoadMatcher, dead_reckon_blackout, DISP_SCALE
 
-MODEL_PATH = "preprocessing/output/models/dr_model_v0noise.pt"
-TEST_PATH = "preprocessing/output/test_splits/Vta1a_test_split.npz"
+ROOT = Path(__file__).resolve().parents[1]
+MODEL_PATH = ROOT / "preprocessing/output/models/dr_model_v0noise_tuned.pt"
+FALLBACK_MODEL_PATH = ROOT / "preprocessing/output/models/dr_model_v0noise.pt"
+TEST_PATH = ROOT / "preprocessing/output/test_splits/Vta1a_test_split.npz"
 
 # heading-rate mix (sign: compass heading = -(V YawRate convention))
 WEIGHT_SETS = {
@@ -64,11 +66,11 @@ class DRNet(nn.Module):
 
 def prepare_test_split(trip):
     """Load or create the evaluation split for a windowed trip."""
-    split_path = Path(f"preprocessing/output/test_splits/{trip}_test_split.npz")
+    split_path = ROOT / f"preprocessing/output/test_splits/{trip}_test_split.npz"
     if split_path.exists():
         return split_path
 
-    windows_path = Path(f"preprocessing/output/06_windows/{trip}_windows.npz")
+    windows_path = ROOT / f"preprocessing/output/06_windows/{trip}_windows.npz"
     if not windows_path.exists():
         raise FileNotFoundError(
             f"No test split or window file for trip {trip}: {windows_path}"
@@ -102,9 +104,9 @@ def reliable_heading(heading_start, v_start, s, min_speed=3.0,
 
 def main(trip="Vta1a"):
     global TEST_PATH
-    TEST_PATH = str(prepare_test_split(trip))
-    graph_path = Path(f"preprocessing/output/osm_cache/{trip.lower()}_roads.graphml")
-    origin_path = Path(f"preprocessing/output/osm_cache/{trip.lower()}_origin.json")
+    TEST_PATH = prepare_test_split(trip)
+    graph_path = ROOT / f"preprocessing/output/osm_cache/{trip.lower()}_roads.graphml"
+    origin_path = ROOT / f"preprocessing/output/osm_cache/{trip.lower()}_origin.json"
     if not graph_path.exists() or not origin_path.exists():
         raise FileNotFoundError(
             f"Missing OSM cache for {trip}. Expected:\n"
@@ -122,7 +124,20 @@ def main(trip="Vta1a"):
 
     dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = DRNet(in_channels=X.shape[2]).to(dev)
-    model.load_state_dict(torch.load(MODEL_PATH, map_location=dev))
+    model_path = MODEL_PATH
+    if not model_path.exists():
+        if FALLBACK_MODEL_PATH.exists():
+            model_path = FALLBACK_MODEL_PATH
+            print(
+                f"Warning: {MODEL_PATH.name} is missing; using "
+                f"{FALLBACK_MODEL_PATH.name}."
+            )
+        else:
+            raise FileNotFoundError(
+                f"No blackout model found. Expected {MODEL_PATH} "
+                f"or {FALLBACK_MODEL_PATH}."
+            )
+    model.load_state_dict(torch.load(model_path, map_location=dev))
     model.eval()
     X_tensor = torch.tensor(X, dtype=torch.float32).permute(0, 2, 1).to(dev)
 

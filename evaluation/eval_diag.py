@@ -91,14 +91,14 @@ for lo, hi in [(0,10),(10,30),(30,50),(50,80),(80,200)]:
 # Non-overlapping integration
 rate = X[:, :, 3:6] @ W
 Yg = rotate_local_to_global(Y, hs)
-print("\nNon-overlapping (step=4 windows, full 4s displacement), median drift %:")
+print("\nNon-overlapping (step=1 window, full 1s displacement), median drift %:")
 print(f"{'blackout':>9} {'#runs':>6} {'GT heading':>11} {'gyro heading':>13}")
 for dur in (32, 60, 120, 300):
-    steps = dur // 4
+    steps = dur
     gt, gy = [], []
     for s in range(1, len(X) - dur, 30):
         if kmh[s] < 20: continue
-        idx = [s + 4*j for j in range(steps)]
+        idx = [s + j for j in range(steps)]
         target = Yg[idx].sum(0); dist = np.linalg.norm(Yg[idx], axis=1).sum()
         if dist < 50: continue
         # GT heading
@@ -106,7 +106,7 @@ for dur in (32, 60, 120, 300):
         for j in idx:
             p += rotate_local_to_global(P[j:j+1], hs[j:j+1])[0]
         gt.append(100*np.linalg.norm(p-target)/dist)
-        # gyro heading (start from true heading, integrate full 4 s of rate)
+        # gyro heading (start from true heading, integrate full 1 s of rate)
         h = hs[s]; p = np.zeros(2)
         for j in idx:
             p += rotate_local_to_global(P[j:j+1], np.array([h]))[0]

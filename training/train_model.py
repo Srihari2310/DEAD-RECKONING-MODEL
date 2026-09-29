@@ -39,12 +39,27 @@ DATA_PATHS = [
     "preprocessing/output/06_windows/S3a_windows.npz",
     "preprocessing/output/06_windows/s3b_windows.npz",
     "preprocessing/output/06_windows/s3c_windows.npz",
-    # Vw series, added for the expanded training experiment; Vw11 remains held out.
-    
+    # Trusted additional trips after raw-data alignment checks.
+    "preprocessing/output/06_windows/Vtb2_windows.npz",
+    "preprocessing/output/06_windows/Vw2_windows.npz",
+    "preprocessing/output/06_windows/Vw3_windows.npz",
+    "preprocessing/output/06_windows/Vw4_windows.npz",
+    "preprocessing/output/06_windows/Vw5_windows.npz",
+    "preprocessing/output/06_windows/Vw6_windows.npz",
+    "preprocessing/output/06_windows/Vw7_windows.npz",
+    "preprocessing/output/06_windows/Vw8_windows.npz",
+    "preprocessing/output/06_windows/Vw9_windows.npz",
+    "preprocessing/output/06_windows/Vw10_windows.npz",
+    "preprocessing/output/06_windows/Vw14a_windows.npz",
+    "preprocessing/output/06_windows/Vw14b_windows.npz",
+    "preprocessing/output/06_windows/Vw14c_windows.npz",
+    "preprocessing/output/06_windows/Vw16a_windows.npz",
+    "preprocessing/output/06_windows/Vw16b_windows.npz",
+    "preprocessing/output/06_windows/Vw17_windows.npz",
 ]
 TEST_PATH = "preprocessing/output/06_windows/Vta1a_windows.npz"
 
-MODEL_OUT = "preprocessing/output/models/dr_model_v0noise.pt"
+MODEL_OUT = "preprocessing/output/models/dr_model_v0noise_tuned.pt"
 TEST_SPLIT_OUT = "preprocessing/output/test_splits/Vta1a_test_split.npz"
 
 VAL_FRACTION = 0.15
@@ -94,7 +109,7 @@ class DRNet(nn.Module):
         return self.head(combined)
 
 
-def physical_regularizer(pred, dt_window=4.0):
+def physical_regularizer(pred, dt_window=1.0):
     # penalize implausible speed implied by predicted displacement
     speed = torch.sqrt((pred ** 2).sum(dim=1)) / dt_window
     implausible = torch.clamp(speed - 40.0, min=0)  # >40 m/s (~144km/h) is implausible for this dataset
@@ -206,7 +221,7 @@ def main():
         if val_loss < best_val_loss:
             best_val_loss = val_loss
             patience_counter = 0
-            torch.save(model.state_dict(), "preprocessing/output/models/dr_model_v0noise.pt")
+            torch.save(model.state_dict(), MODEL_OUT)
         else:
             patience_counter += 1
             if patience_counter >= PATIENCE:

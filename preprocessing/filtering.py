@@ -16,6 +16,7 @@ os.makedirs(FILTERED_DIR, exist_ok=True)
 
 def filter_trip(trip_name, output_dir="preprocessing/output", verbose=True,
                  highpass_hz=0.1, lowpass_hz=4.5, sample_rate_hz=10.0,
+                 gyro_lowpass_hz=4.0,
                  despike_threshold=10.0, lateral_yawrate_gate_degs=5.0,
                  lateral_g_gate=0.1, lateral_clip=2.0):
     """
@@ -33,7 +34,7 @@ def filter_trip(trip_name, output_dir="preprocessing/output", verbose=True,
         suppress spikes that occur when the vehicle is NOT actually
         turning hard (real turns are preserved).
     """
-    from scipy.signal import butter, filtfilt
+    from scipy.signal import butter, filtfilt, medfilt
 
     s_path = os.path.join("preprocessing/output/02_calibrated", f"S-{trip_name}_calibrated.csv")
     v_path = os.path.join(output_dir, "01_aligned", f"V-{trip_name}_aligned.csv")
@@ -63,6 +64,11 @@ def filter_trip(trip_name, output_dir="preprocessing/output", verbose=True,
             f"sample_rate_hz={sample_rate_hz}."
         )
     b, a = butter(N=4, Wn=[highpass_hz / nyquist, lowpass_hz / nyquist], btype="band")
+    if not 0.0 < gyro_lowpass_hz < nyquist:
+        raise ValueError(
+            f"gyro_lowpass_hz={gyro_lowpass_hz} must be between 0 and Nyquist ({nyquist}Hz)."
+        )
+    gyro_b, gyro_a = butter(N=3, Wn=gyro_lowpass_hz / nyquist, btype="low")
 
     def despike_and_filter(signal, clip_val):
         clipped = np.clip(signal, -clip_val, clip_val)
@@ -82,10 +88,36 @@ def filter_trip(trip_name, output_dir="preprocessing/output", verbose=True,
     lateral_gated[clip_mask] = np.sign(lateral_raw[clip_mask]) * lateral_clip
     lateral_filtered = filtfilt(b, a, lateral_gated)
 
+    gyro_cols = [
+        "GYROSCOPE Yaw (rad/s)",
+        "GYROSCOPE Pitch (rad/s)",
+        "GYROSCOPE Roll (rad/s)",
+    ]
+    missing_gyro = [c for c in gyro_cols if c not in s_df.columns]
+    if missing_gyro:
+        raise ValueError(f"[{trip_name}] Missing gyro columns: {missing_gyro}")
+
+    gyro_filtered = {}
+    gyro_spikes = {}
+    for col in gyro_cols:
+        raw = s_df[col].values.astype(float)
+        medianed = medfilt(raw, kernel_size=3)
+        spike_mask = (np.abs(raw - medianed) > 1.0) | (np.abs(raw) > 3.0)
+        cleaned = raw.copy()
+        cleaned[np.abs(raw - medianed) > 1.0] = medianed[np.abs(raw - medianed) > 1.0]
+        hard_spike = np.abs(raw) > 3.0
+        cleaned[hard_spike] = np.nan
+        cleaned = pd.Series(cleaned).interpolate(limit_direction="both").to_numpy()
+        gyro_filtered[col] = filtfilt(gyro_b, gyro_a, cleaned)
+        gyro_spikes[col] = int(spike_mask.sum())
+
     s_df = s_df.copy()
     s_df["accel_forward_filt"] = forward_filtered
     s_df["accel_lateral_filt"] = lateral_filtered
     s_df["accel_vertical_filt"] = vertical_filtered
+    s_df["gyro_yaw_filt"] = gyro_filtered[gyro_cols[0]]
+    s_df["gyro_pitch_filt"] = gyro_filtered[gyro_cols[1]]
+    s_df["gyro_roll_filt"] = gyro_filtered[gyro_cols[2]]
 
     n_lateral_clipped = int(clip_mask.sum())
 
@@ -93,6 +125,7 @@ def filter_trip(trip_name, output_dir="preprocessing/output", verbose=True,
         print(f"[{trip_name}] Band-pass: {highpass_hz}-{lowpass_hz}Hz (Nyquist={nyquist}Hz)")
         print(f"[{trip_name}] Lateral dual-gate clipped {n_lateral_clipped}/{n} rows "
               f"({100*n_lateral_clipped/n:.2f}%)")
+        print(f"[{trip_name}] Gyro low-pass: {gyro_lowpass_hz:.1f}Hz; isolated spikes removed: {gyro_spikes}")
         for name, arr in [("accel_forward_filt", forward_filtered),
                            ("accel_lateral_filt", lateral_filtered),
                            ("accel_vertical_filt", vertical_filtered)]:
@@ -107,5 +140,6 @@ def filter_trip(trip_name, output_dir="preprocessing/output", verbose=True,
     return {
         "s_filtered": s_df,
         "n_lateral_clipped": n_lateral_clipped,
+        "gyro_spikes": gyro_spikes,
         "out_path": out_path,
     }

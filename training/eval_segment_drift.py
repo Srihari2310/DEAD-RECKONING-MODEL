@@ -50,8 +50,8 @@ NORM_PATH = OUTPUT_DIR / "dr_model_multitrip_norm.npz"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 TRAIN_FRACTION = 0.8  # must match train_multitrip.py's split point
 
-# Windows are 4.0s each (40 samples @ 10Hz) with 1.0s stride (see run_pipeline.py).
-WINDOW_SECONDS = 4.0
+# Windows are 1.0s each (10 samples @ 10Hz) with 1.0s stride (see run_pipeline.py).
+WINDOW_SECONDS = 1.0
 STRIDE_SECONDS = 1.0
 
 # Blackout durations to simulate, in seconds.

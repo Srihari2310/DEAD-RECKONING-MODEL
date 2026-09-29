@@ -9,12 +9,12 @@ Reads:
 
 Writes:
   preprocessing/output/{trip}_windows.npz
-    X: (n_windows, 40, 6)  -> accel_forward, accel_lateral, accel_vertical, gyro_yaw, gyro_pitch, gyro_roll
+    X: (n_windows, 10, 6)  -> accel_forward, accel_lateral, accel_vertical, gyro_yaw, gyro_pitch, gyro_roll
     Y: (n_windows, 2)      -> summed dx, dy over the window
     idx: (n_windows,)      -> start row index of each window (for traceability back to source rows)
 
 Params (fixed, consistent across trips per v8/v9 handoff):
-  WINDOW_SEC = 4.0  -> 40 samples at 10Hz
+  WINDOW_SEC = 1.0  -> 10 samples at 10Hz
   STRIDE_SEC = 1.0  -> 10 samples at 10Hz
 """
 
@@ -23,7 +23,7 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 
-WINDOW_SAMPLES = 40   # 4.0s at 10Hz
+WINDOW_SAMPLES = 10   # 1.0s at 10Hz
 STRIDE_SAMPLES = 10   # 1.0s at 10Hz
 
 CHANNELS = [

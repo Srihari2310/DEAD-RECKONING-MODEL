@@ -13,11 +13,11 @@ os.makedirs(WINDOWS_DIR, exist_ok=True)
 
 
 def window_trip(trip_name, output_dir="preprocessing/output", verbose=True,
-                 window_size=40, stride=10,
+                 window_size=10, stride=10,
                  imu_cols=("accel_forward_filt", "accel_lateral_filt",
                            "accel_vertical_filt",
-                           "GYROSCOPE Yaw (rad/s)", "GYROSCOPE Pitch (rad/s)",
-                           "GYROSCOPE Roll (rad/s)")):
+                           "gyro_yaw_filt", "gyro_pitch_filt",
+                           "gyro_roll_filt")):
     """
     Step 6: slice S-{trip}_events.csv (IMU, body-frame) and
     V-{trip}_labels.csv (dx, dy, heading_rad, global-frame) into

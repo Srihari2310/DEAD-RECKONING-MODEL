@@ -8,9 +8,8 @@ Changes vs v29:
   * Edges use their real geometry (curves) and are sampled every ~10 m, so the
     KDTree finds the correct segment even on long roads (old code indexed
     segment MIDPOINTS only).
-  * DISP_SCALE: model predicts displacement over a 40-sample (4 s) window but
-    windows advance only 10 samples (1 s) -> per-window displacement must be
-    scaled by 10/40 = 0.25 before integrating (old eval overcounted 4x).
+  * Model windows are 10 samples (1 s), matching the 10-sample (1 s) stride,
+    so each predicted displacement is already one output interval.
   * dead_reckon_blackout(): simulates a GPS blackout of N windows starting
     from a known position/heading.
 """
@@ -40,7 +39,7 @@ CACHE_DIR = Path("preprocessing/output/osm_cache")
 GRAPH_PATH = CACHE_DIR / "vta1a_roads.graphml"
 ORIGIN_PATH = CACHE_DIR / "vta1a_origin.json"
 
-DISP_SCALE = 10.0 / 40.0   # stride / window length
+DISP_SCALE = 1.0            # 1-second window / 1-second stride
 SAMPLE_SPACING_M = 10.0
 
 

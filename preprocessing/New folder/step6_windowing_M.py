@@ -18,9 +18,9 @@ V_LABELS_PATH = "preprocessing/output/V-M_labels.csv"
 OUT_PATH = "preprocessing/output/M_windows.npz"
 
 FS = 10.0
-WINDOW_SEC = 4.0
+WINDOW_SEC = 1.0
 STRIDE_SEC = 1.0
-WINDOW_LEN = int(WINDOW_SEC * FS)   # 40 samples
+WINDOW_LEN = int(WINDOW_SEC * FS)   # 10 samples
 STRIDE = int(STRIDE_SEC * FS)       # 10 samples
 
 IMU_CHANNELS = [

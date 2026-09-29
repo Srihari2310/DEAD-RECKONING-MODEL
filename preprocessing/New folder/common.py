@@ -787,7 +787,7 @@ def derive_labels(trip_name, output_dir="preprocessing/output", verbose=True,
 
 
 def window_trip(trip_name, output_dir="preprocessing/output", verbose=True,
-                 window_size=40, stride=10,
+                 window_size=10, stride=10,
                  imu_cols=("accel_forward_filt", "accel_lateral_filt",
                            "accel_vertical_filt",
                            "GYROSCOPE Yaw (rad/s)", "GYROSCOPE Pitch (rad/s)",

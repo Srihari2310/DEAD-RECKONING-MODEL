@@ -131,7 +131,7 @@ class DRNet(nn.Module):
         return self.head(x)
 
 
-def physical_regularizer(pred, window_seconds=4.0):
+def physical_regularizer(pred, window_seconds=1.0):
     disp_mag = torch.sqrt(torch.sum(pred ** 2, dim=1) + 1e-8)
     implied_speed = disp_mag / window_seconds
     excess = torch.clamp(implied_speed - PHYSICAL_MAX_SPEED_MPS, min=0)
